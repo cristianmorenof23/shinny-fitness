@@ -179,8 +179,13 @@ export function FeaturedProducts() {
 
                     <button
                       type="button"
-                      onClick={() => addItem(product)}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#7b5a43] px-4 py-3 text-sm font-medium text-white transition-all duration-300 hover:scale-[1.01] hover:bg-[#6b4d39]"
+                      onClick={() =>
+                        addItem({
+                          ...product,
+                          selectedSize: 'Único',
+                          selectedColor: 'Único',
+                        })
+                      } className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#7b5a43] px-4 py-3 text-sm font-medium text-white transition-all duration-300 hover:scale-[1.01] hover:bg-[#6b4d39]"
                     >
                       <ShoppingBag className="h-4 w-4" />
                       Agregar al carrito
