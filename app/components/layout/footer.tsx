@@ -3,139 +3,113 @@ import { Mail, MapPin, Phone } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="border-t border-[#e7d9cc] bg-[#f6efe8] text-[#4b3425]">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-        {/* Marca */}
-        <div className="space-y-4">
-          <Link
-            href="/"
-            className="inline-block text-2xl font-semibold tracking-[0.18em] text-[#4b3425] transition hover:opacity-80"
-          >
-            SHINY
-          </Link>
-
-          <p className="max-w-xs text-sm leading-7 text-[#6f5b4d]">
-            Ropa deportiva femenina seleccionada para acompañarte con estilo,
-            comodidad y actitud en cada día.
-          </p>
-        </div>
-
-        {/* Navegación */}
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8b684d]">
-            Navegación
-          </h3>
-
-          <ul className="mt-4 space-y-3 text-sm">
-            <li>
-              <Link
-                href="/"
-                className="transition duration-300 hover:text-[#8b684d]"
-              >
-                Inicio
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/productos"
-                className="transition duration-300 hover:text-[#8b684d]"
-              >
-                Productos
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/contacto"
-                className="transition duration-300 hover:text-[#8b684d]"
-              >
-                Contacto
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/sobre-mi"
-                className="transition duration-300 hover:text-[#8b684d]"
-              >
-                Sobre mí
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Contacto */}
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8b684d]">
-            Contacto
-          </h3>
-
-          <ul className="mt-4 space-y-4 text-sm text-[#6f5b4d]">
-            <li className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 text-[#7b5a43]" />
-              <span>+54 9 351 000 0000</span>
-            </li>
-
-            <li className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 text-[#7b5a43]" />
-              <span>hola@shiny.com.ar</span>
-            </li>
-
-            <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 text-[#7b5a43]" />
-              <span>Córdoba, Argentina</span>
-            </li>
-
-            <li>
-              <Link
-                href="https://instagram.com"
-                target="_blank"
-                className="inline-flex items-center gap-2 transition duration-300 hover:text-[#8b684d]"
-              >
-                <Mail className="h-4 w-4 text-[#7b5a43]" />
-                Instagram
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Newsletter */}
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8b684d]">
-            Newsletter
-          </h3>
-
-          <p className="mt-4 text-sm leading-7 text-[#6f5b4d]">
-            Recibí novedades, lanzamientos y productos destacados de Shiny.
-          </p>
-
-          <form className="mt-5 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-            <input
-              type="email"
-              placeholder="Tu email"
-              className="h-11 w-full rounded-full border border-[#dbc7b6] bg-white px-4 text-sm text-[#3e2d21] outline-none transition-all duration-300 placeholder:text-[#9c8776] focus:border-[#a27b5c] focus:shadow-md"
-            />
-
-            <button
-              type="submit"
-              className="inline-flex h-11 items-center justify-center rounded-full bg-[#7b5a43] px-5 text-sm font-medium text-white transition-all duration-300 hover:bg-[#6b4d39]"
+    <footer className="border-t border-[#E5DED4] bg-[#FDFBF9] text-[#2D241E]">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
+          
+          {/* Marca y Propuesta de Valor */}
+          <div className="space-y-6">
+            <Link
+              href="/"
+              className="inline-block text-2xl font-bold tracking-[0.2em] text-[#4A3728] transition hover:opacity-80"
             >
-              Suscribirme
-            </button>
-          </form>
+              SHINY
+            </Link>
+            <p className="max-w-xs text-sm leading-7 text-[#5C4D42]">
+              Ropa deportiva femenina seleccionada para mujeres que buscan el equilibrio perfecto entre 
+              <strong> rendimiento y estilo</strong>.
+            </p>
+            {/* Redes Sociales Rápidas */}
+            <div className="flex gap-4">
+              <Link href="https://instagram.com" className="group rounded-full border border-[#E5DED4] p-2 transition hover:bg-[#F5F0EB]">
+                <Phone className="h-4 w-4 text-[#8B5E3C]" />
+              </Link>
+              <Link href="#" className="group rounded-full border border-[#E5DED4] p-2 transition hover:bg-[#F5F0EB]">
+                <Mail className="h-4 w-4 text-[#8B5E3C]" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Navegación - Diseño Minimalista */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#8B5E3C]">
+              Explorar
+            </h3>
+            <ul className="mt-6 space-y-4 text-sm">
+              {['Inicio', 'Productos', 'Contacto', 'Sobre mí'].map((item) => (
+                <li key={item}>
+                  <Link
+                    href={`/${item.toLowerCase().replace(' ', '-')}`}
+                    className="relative text-[#5C4D42] transition duration-300 hover:text-[#4A3728] after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-[#8B5E3C] after:transition-all hover:after:w-full"
+                  >
+                    {item}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Datos de contacto con iconos curados */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#8B5E3C]">
+              Contacto
+            </h3>
+            <ul className="mt-6 space-y-5 text-sm text-[#5C4D42]">
+              <li className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F5F0EB]">
+                  <Phone className="h-3.5 w-3.5 text-[#8B5E3C]" />
+                </div>
+                <span>+54 9 351 000 0000</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F5F0EB]">
+                  <Mail className="h-3.5 w-3.5 text-[#8B5E3C]" />
+                </div>
+                <span>hola@shiny.com.ar</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F5F0EB]">
+                  <MapPin className="h-3.5 w-3.5 text-[#8B5E3C]" />
+                </div>
+                <span>Córdoba, Argentina</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Newsletter Estilo Boutique */}
+          <div className="rounded-4xl bg-[#F5F0EB] p-6 lg:p-8">
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#4A3728]">
+              Únete al Club
+            </h3>
+            <p className="mt-3 text-xs leading-5 text-[#6F5B4D]">
+              Recibe lanzamientos exclusivos y consejos de bienestar.
+            </p>
+            <form className="mt-6 space-y-3">
+              <input
+                type="email"
+                placeholder="Tu email"
+                className="w-full rounded-xl border border-[#E5DED4] bg-white px-4 py-3 text-xs outline-none transition-all focus:border-[#8B5E3C]"
+              />
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-[#4A3728] py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#2D241E]"
+              >
+                Suscribirme
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
 
-      {/* Barra inferior */}
-      <div className="border-t border-[#e7d9cc]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-[#8a7666] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>© {new Date().getFullYear()} Shiny. Todos los derechos reservados.</p>
-
-          <div className="flex gap-4">
-            <Link href="/politica-de-privacidad" className="hover:text-[#6b4f3a] transition">
-              Privacidad
-            </Link>
-            <Link href="/terminos-y-condiciones" className="hover:text-[#6b4f3a] transition">
-              Términos
-            </Link>
+        {/* Créditos Finales */}
+        <div className="mt-16 border-t border-[#E5DED4] pt-8">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-[#8B5E3C]">
+              © {new Date().getFullYear()} Shiny Fitness. Diseñado con ♡ para mujeres reales.
+            </p>
+            <div className="flex gap-6 text-[10px] font-bold uppercase tracking-widest text-[#5C4D42]">
+              <Link href="/privacidad" className="hover:text-[#8B5E3C] transition">Privacidad</Link>
+              <Link href="/terminos" className="hover:text-[#8B5E3C] transition">Términos</Link>
+            </div>
           </div>
         </div>
       </div>

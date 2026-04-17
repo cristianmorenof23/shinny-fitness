@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react'
+import { Star, Quote } from 'lucide-react'
 
 const testimonials = [
   {
@@ -23,43 +23,49 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="bg-[#fffaf6] py-16 sm:py-20">
+    <section className="bg-[#FDFBF9] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 flex max-w-2xl flex-col gap-3">
-          <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8b684d]">
-            Opiniones
+        
+        {/* Encabezado centrado para variar el ritmo visual */}
+        <div className="mb-16 flex flex-col items-center text-center">
+          <span className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-[#8B5E3C]">
+            Comunidad Shiny
           </span>
-
-          <h2 className="text-3xl font-semibold leading-tight text-[#2f241d] sm:text-4xl">
-            Lo que dicen nuestras clientas
+          <h2 className="text-4xl font-bold tracking-tight text-[#2D241E] sm:text-5xl">
+            Lo que dicen <span className="italic font-serif text-[#8B5E3C]">nuestras clientas</span>
           </h2>
-
-          <p className="text-sm leading-7 text-[#6f5b4d] sm:text-base">
-            Experiencias reales de mujeres que ya eligieron Shiny.
-          </p>
+          <div className="mt-4 h-1 w-12 rounded-full bg-[#E5DED4]"></div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((item) => (
             <article
               key={item.id}
-              className="group rounded-3xl border border-[#eadfd5] bg-white p-6 shadow-[0_10px_30px_rgba(91,67,50,0.05)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(91,67,50,0.1)]"
+              className="relative flex flex-col justify-between rounded-[2.5rem] border border-[#E5DED4] bg-white p-10 transition-all duration-500 hover:shadow-xl hover:shadow-[#4A3728]/5"
             >
-              {/* Estrellas */}
-              <div className="mb-4 flex items-center gap-1 text-[#c59a6c]">
-                {Array.from({ length: item.rating }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-[#c59a6c]" />
-                ))}
+              {/* Icono de comilla decorativo */}
+              <Quote className="absolute right-10 top-10 h-8 w-8 text-[#F5F0EB]" />
+
+              <div className="relative">
+                {/* Estrellas en oro viejo */}
+                <div className="mb-6 flex items-center gap-1 text-[#D4AF37]">
+                  {Array.from({ length: item.rating }).map((_, i) => (
+                    <Star key={i} className="h-3.5 w-3.5 fill-[#D4AF37]" />
+                  ))}
+                </div>
+
+                {/* Texto del testimonio */}
+                <p className="text-base italic leading-relaxed text-[#5C4D42]">
+                  “{item.text}”
+                </p>
               </div>
 
-              {/* Texto */}
-              <p className="text-sm leading-7 text-[#6f5b4d]">
-                “{item.text}”
-              </p>
-
-              {/* Nombre */}
-              <div className="mt-5 text-sm font-semibold text-[#2f241d]">
-                {item.name}
+              {/* Autor con línea decorativa */}
+              <div className="mt-8 flex items-center gap-3">
+                <div className="h-px w-6 bg-[#8B5E3C]"></div>
+                <span className="text-sm font-bold tracking-widest uppercase text-[#2D241E]">
+                  {item.name}
+                </span>
               </div>
             </article>
           ))}
