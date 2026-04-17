@@ -25,7 +25,7 @@ const slides = [
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1506629905607-d9d7d4b0b09b?auto=format&fit=crop&w=1800&q=80',
+    image: '/banner_2.png',
     eyebrow: 'Shiny Premium',
     title: 'Conjuntos con estilo y actitud',
     description: 'Una selección pensada para mujeres que quieren sentirse seguras y cancheras dentro y fuera del gym.',
