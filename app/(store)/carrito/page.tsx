@@ -76,8 +76,9 @@ export default function CartPage() {
                       <div className="flex items-center rounded-full border border-[#ddccbd]">
                         <button
                           type="button"
-                          onClick={() => decreaseQuantity(item.id)}
-                          className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
+                          onClick={() =>
+                            decreaseQuantity(item.id, item.selectedSize, item.selectedColor)
+                          } className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -88,8 +89,9 @@ export default function CartPage() {
 
                         <button
                           type="button"
-                          onClick={() => increaseQuantity(item.id)}
-                          className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
+                          onClick={() =>
+                            increaseQuantity(item.id, item.selectedSize, item.selectedColor)
+                          } className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
@@ -97,8 +99,9 @@ export default function CartPage() {
 
                       <button
                         type="button"
-                        onClick={() => removeItem(item.id)}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#e4d2c4] px-4 py-2 text-sm font-medium text-[#7b5a43] transition hover:bg-[#f8efe7]"
+                        onClick={() =>
+                          removeItem(item.id, item.selectedSize, item.selectedColor)
+                        } className="inline-flex items-center gap-2 rounded-full border border-[#e4d2c4] px-4 py-2 text-sm font-medium text-[#7b5a43] transition hover:bg-[#f8efe7]"
                       >
                         <Trash2 className="h-4 w-4" />
                         Eliminar
