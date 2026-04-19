@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Menu, Search, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/app/store/cart-store'
 
-export function Navbar() {
+function ProductsPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -68,3 +68,5 @@ export function Navbar() {
     </header>
   )
 }
+
+export default ProductsPage

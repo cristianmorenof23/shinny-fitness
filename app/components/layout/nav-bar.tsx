@@ -108,7 +108,7 @@ export function Navbar() {
           {/* Acciones */}
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
-              href="/login"
+              href="/cuenta"
               className="flex h-10 w-10 items-center justify-center rounded-full text-[#4A3728] transition-colors hover:bg-[#F5F0EB]"
             >
               <User className="h-5 w-5" />

@@ -1,6 +1,15 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Heart, ShieldCheck, Sparkles } from 'lucide-react'
+import { createMetadata } from '@/app/lib/seo'
+
+export const metadata: Metadata = createMetadata({
+  title: 'Sobre mi',
+  description:
+    'Conoce la historia de Shiny Fitness, una marca pensada para mujeres que buscan ropa deportiva femenina con estilo, comodidad y atencion cercana.',
+  path: '/sobre-mi',
+})
 
 export default function AboutPage() {
   return (

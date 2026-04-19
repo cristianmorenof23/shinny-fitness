@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Prisma } from '../../../generated/prisma/client'
+import ImageUpload, { UploadedImage } from './image-upload'
+import { createProduct } from '@/app/actions/product'
 
 type Category = {
   id: string
@@ -39,6 +41,18 @@ export default function ProductForm({
   const [isNew, setIsNew] = useState(product?.isNew ?? false)
   const [isActive, setIsActive] = useState(product?.isActive ?? true)
 
+  const [images, setImages] = useState<UploadedImage[]>(
+    product?.images?.length
+      ? product.images.map((image) => ({
+          url: image.url,
+          publicId: image.id,
+          alt: image.alt ?? '',
+        }))
+      : []
+  )
+
+  const [isPending, startTransition] = useTransition()
+
   function handleAutoSlug(value: string) {
     const generatedSlug = value
       .toLowerCase()
@@ -52,29 +66,32 @@ export default function ProductForm({
     setSlug(generatedSlug)
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    const payload = {
-      name,
-      slug,
-      description,
-      shortDescription,
-      price,
-      compareAtPrice,
-      categoryId,
-      isFeatured,
-      isNew,
-      isActive,
-    }
+    startTransition(async () => {
+      const productData = {
+        name,
+        slug,
+        description,
+        shortDescription,
+        price: price.toString(),
+        compareAtPrice: compareAtPrice?.toString() || '',
+        categoryId,
+        isFeatured,
+        isNew,
+        isActive,
+        images: images.map((img) => ({
+          url: img.url,
+          alt: img.alt || '',
+        }))
+      }
+      const result = await createProduct(productData)
 
-    console.log('Payload producto:', payload)
-
-    alert(
-      product
-        ? 'Formulario listo para editar producto. Falta conectar server action.'
-        : 'Formulario listo para crear producto. Falta conectar server action.'
-    )
+      if (result?.ok === false) {
+        alert('Error al crear producto. Revisá los campos.')
+      }
+    })
   }
 
   return (
@@ -252,22 +269,28 @@ export default function ProductForm({
         </label>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-5">
-        <h3 className="text-base font-semibold text-neutral-900">
-          Imágenes y variantes
-        </h3>
-        <p className="mt-2 text-sm text-neutral-500">
-          Después conectamos esta parte con tus componentes de upload y variantes.
-          Primero dejemos sólido el alta y edición básica del producto.
-        </p>
+      <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
+        <div>
+          <h3 className="text-base font-semibold text-neutral-900">Imágenes</h3>
+          <p className="mt-1 text-sm text-neutral-500">
+            Subí las fotos del producto desde tu compu o celular.
+          </p>
+        </div>
+
+        <ImageUpload value={images} onChange={setImages} />
       </div>
 
       <div className="flex flex-wrap gap-3">
         <button
           type="submit"
-          className="inline-flex rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
+          disabled={isPending}
+          className="inline-flex rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
-          {product ? 'Guardar cambios' : 'Crear producto'}
+          {isPending
+            ? 'Guardando...'
+            : product
+            ? 'Guardar cambios'
+            : 'Crear producto'}
         </button>
       </div>
     </form>

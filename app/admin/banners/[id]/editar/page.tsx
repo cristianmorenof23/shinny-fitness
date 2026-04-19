@@ -1,7 +1,7 @@
-import React from 'react'
+import { requireAdmin } from '@/app/lib/auth'
 
-export default function BannearEditarPage() {
-  return (
-    <div>BannearEditarPage</div>
-  )
+export default async function BannearEditarPage() {
+  await requireAdmin()
+
+  return <div>BannearEditarPage</div>
 }

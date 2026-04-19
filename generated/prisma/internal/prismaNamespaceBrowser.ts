@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Session: 'Session',
   Category: 'Category',
   Product: 'Product',
   ProductImage: 'ProductImage',
@@ -80,6 +81,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
+  name: 'name',
   email: 'email',
   password: 'password',
   role: 'role',
@@ -88,6 +90,18 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {
@@ -221,8 +235,17 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
 export const UserOrderByRelevanceFieldEnum = {
   id: 'id',
+  name: 'name',
   email: 'email',
   password: 'password'
 } as const
@@ -230,12 +253,13 @@ export const UserOrderByRelevanceFieldEnum = {
 export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
 
 
-export const NullsOrder = {
-  first: 'first',
-  last: 'last'
+export const SessionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  userId: 'userId'
 } as const
 
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+export type SessionOrderByRelevanceFieldEnum = (typeof SessionOrderByRelevanceFieldEnum)[keyof typeof SessionOrderByRelevanceFieldEnum]
 
 
 export const CategoryOrderByRelevanceFieldEnum = {

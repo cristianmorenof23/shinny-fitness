@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import AdminHeader from "../components/admin/admin-header"
 import AdminSidebar from "../components/admin/admin-sidebar"
+import { createMetadata } from "../lib/seo"
+
+export const metadata: Metadata = createMetadata({
+  title: 'Admin',
+  description: 'Panel de administracion de Shiny Fitness.',
+  path: '/admin',
+  noIndex: true,
+})
 
 export default function AdminLayout({
   children,

@@ -1,7 +1,7 @@
-import React from 'react'
+import { requireAdmin } from '@/app/lib/auth'
 
-export default function CategoriasNuevaPage() {
-  return (
-    <div>CategoriasNuevaPage</div>
-  )
+export default async function NuevaCategoriaPage() {
+  await requireAdmin()
+
+  return <div>NuevaCategoriaPage</div>
 }

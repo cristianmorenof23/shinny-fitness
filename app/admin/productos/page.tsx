@@ -1,7 +1,7 @@
-import React from 'react'
+import { requireAdmin } from '@/app/lib/auth'
 
-export default function ProductosPage() {
-  return (
-    <div>ProductosPage</div>
-  )
+export default async function ProductosPage() {
+  await requireAdmin()
+
+  return <div>ProductosPage</div>
 }

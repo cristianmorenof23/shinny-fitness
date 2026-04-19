@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Mail, MapPin, MessageCircle, Phone,  } from 'lucide-react'
+import { createMetadata } from '@/app/lib/seo'
+
+export const metadata: Metadata = createMetadata({
+  title: 'Contacto',
+  description:
+    'Contactate con Shiny Fitness para consultar talles, stock, envios y asesoramiento personalizado desde Cordoba, Argentina.',
+  path: '/contacto',
+})
 
 export default function ContactPage() {
   return (

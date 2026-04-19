@@ -52,7 +52,7 @@ export function Footer() {
             </div>
 
             <div className="flex flex-col justify-center">
-              <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-md">
+              <div className="rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
                 <p className="text-sm leading-relaxed text-[#D9CEC4]">
                   Unite a nuestra comunidad y recibí curaduría de looks, acceso anticipado y consejos de bienestar.
                 </p>

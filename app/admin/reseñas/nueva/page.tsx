@@ -1,7 +1,7 @@
-import React from 'react'
+import { requireAdmin } from '@/app/lib/auth'
 
-export default function ReseñaPage() {
-  return (
-    <div>ReseñaPage</div>
-  )
+export default async function NuevaResenaPage() {
+  await requireAdmin()
+
+  return <div>NuevaResenaPage</div>
 }

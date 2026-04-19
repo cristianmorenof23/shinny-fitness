@@ -1,30 +1,56 @@
 'use server'
 
 import { prisma } from '@/app/lib/prisma'
+import { requireAdmin } from '@/app/lib/auth'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-const productSchema = z.object({
+const createProductSchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
-  description: z.string().min(10),
+  description: z.string().min(5),
   shortDescription: z.string().optional(),
   price: z.coerce.number().positive(),
-  compareAtPrice: z.coerce.number().optional(),
+  compareAtPrice: z
+    .union([z.coerce.number().positive(), z.literal(''), z.undefined()])
+    .optional(),
   categoryId: z.string().min(1),
-  isFeatured: z.boolean().optional(),
-  isNew: z.boolean().optional(),
-  isActive: z.boolean().optional(),
+  isFeatured: z.boolean(),
+  isNew: z.boolean(),
+  isActive: z.boolean(),
+  images: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        alt: z.string().optional(),
+      })
+    )
+    .optional(),
 })
 
-export async function createProduct(formData: FormData) {
-  const raw = Object.fromEntries(formData.entries())
+export async function createProduct(data: {
+  name: string
+  slug: string
+  description: string
+  shortDescription?: string
+  price: string
+  compareAtPrice?: string
+  categoryId: string
+  isFeatured: boolean
+  isNew: boolean
+  isActive: boolean
+  images?: {
+    url: string
+    alt?: string
+  }[]
+}) {
+  await requireAdmin()
 
-  const parsed = productSchema.safeParse({
-    ...raw,
-    isFeatured: raw.isFeatured === 'on',
-    isNew: raw.isNew === 'on',
-    isActive: raw.isActive === 'on',
+  const parsed = createProductSchema.safeParse({
+    ...data,
+    compareAtPrice: data.compareAtPrice ? data.compareAtPrice : undefined,
+    images: data.images ?? [],
   })
 
   if (!parsed.success) {
@@ -34,14 +60,44 @@ export async function createProduct(formData: FormData) {
     }
   }
 
+  const existingSlug = await prisma.product.findUnique({
+    where: { slug: parsed.data.slug },
+  })
+
+  if (existingSlug) {
+    return {
+      ok: false,
+      errors: {
+        slug: ['Ya existe un producto con ese slug'],
+      },
+    }
+  }
+
   await prisma.product.create({
     data: {
-      ...parsed.data,
+      name: parsed.data.name,
+      slug: parsed.data.slug,
+      description: parsed.data.description,
+      shortDescription: parsed.data.shortDescription || null,
+      price: parsed.data.price,
+      compareAtPrice:
+        parsed.data.compareAtPrice === '' || parsed.data.compareAtPrice == null
+          ? null
+          : Number(parsed.data.compareAtPrice),
+      categoryId: parsed.data.categoryId,
+      isFeatured: parsed.data.isFeatured,
+      isNew: parsed.data.isNew,
+      isActive: parsed.data.isActive,
+      images: {
+        create: (parsed.data.images ?? []).map((image) => ({
+          url: image.url,
+          alt: image.alt || null,
+        })),
+      },
     },
   })
 
   revalidatePath('/admin/productos')
   revalidatePath('/productos')
-
-  return { ok: true }
+  redirect('/admin/productos')
 }

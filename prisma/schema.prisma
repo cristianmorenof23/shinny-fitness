@@ -9,11 +9,26 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
+  name      String?
   email     String   @unique
   password  String
-  role      Role     @default(ADMIN)
+  role      Role     @default(CUSTOMER)
+  sessions  Session[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Category {
@@ -164,6 +179,7 @@ model Testimonial {
 
 enum Role {
   ADMIN
+  CUSTOMER
 }
 
 enum OrderStatus {
