@@ -1,30 +1,132 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Menu, Search, ShoppingBag, User, X } from 'lucide-react'
+import { toast } from 'sonner'
+import { BrandLogo } from '@/app/components/brand/brand-logo'
 import { useCartStore } from '@/app/store/cart-store'
 import { CartDrawer } from '../cart/cart-drawer'
 
 const navLinks = [
   { href: '/productos', label: 'Productos' },
   { href: '/contacto', label: 'Contacto' },
-  { href: '/sobre-mi', label: 'Sobre mí' },
+  { href: '/sobre-mi', label: 'Sobre mi' },
 ]
 
+type SearchResult = {
+  id: string
+  name: string
+  slug: string
+  price: number
+  category: string
+  image: string
+}
+
+function formatPrice(value: number) {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function SearchResultsDropdown({
+  query,
+  results,
+  loading,
+  onSelect,
+}: {
+  query: string
+  results: SearchResult[]
+  loading: boolean
+  onSelect: () => void
+}) {
+  const trimmedQuery = query.trim()
+
+  if (!trimmedQuery) {
+    return null
+  }
+
+  return (
+    <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-50 overflow-hidden rounded-[24px] border border-[#E5DED4] bg-white shadow-[0_20px_60px_rgba(74,55,40,0.14)]">
+      {loading ? (
+        <p className="px-4 py-4 text-sm text-[#6f5b4d]">Buscando productos...</p>
+      ) : results.length === 0 ? (
+        <div className="px-4 py-4">
+          <p className="text-sm text-[#6f5b4d]">
+            No encontramos resultados para &quot;{trimmedQuery}&quot;.
+          </p>
+          <Link
+            href={`/productos?search=${encodeURIComponent(trimmedQuery)}`}
+            onClick={onSelect}
+            className="mt-3 inline-flex text-sm font-semibold text-[#8B5E3C] hover:text-[#4A3728]"
+          >
+            Ver todos los resultados
+          </Link>
+        </div>
+      ) : (
+        <div>
+          <div className="max-h-[360px] overflow-y-auto">
+            {results.map((result) => (
+              <Link
+                key={result.id}
+                href={`/productos/${result.slug}`}
+                onClick={onSelect}
+                className="flex items-center gap-3 border-b border-[#f2e8de] px-4 py-3 transition hover:bg-[#fcf8f4] last:border-b-0"
+              >
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#F6F1EB]">
+                  <Image
+                    src={result.image}
+                    alt={result.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8B5E3C]">
+                    {result.category}
+                  </p>
+                  <p className="truncate text-sm font-semibold text-[#2D241E]">
+                    {result.name}
+                  </p>
+                  <p className="text-sm text-[#6f5b4d]">{formatPrice(result.price)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <Link
+            href={`/productos?search=${encodeURIComponent(trimmedQuery)}`}
+            onClick={onSelect}
+            className="flex items-center justify-between bg-[#fcf8f4] px-4 py-3 text-sm font-semibold text-[#4A3728] transition hover:bg-[#f5ede6]"
+          >
+            Ver todos los resultados
+            <span className="text-[#8B5E3C]">{results.length} sugerencias</span>
+          </Link>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Navbar() {
-  // --- Estados ---
-  const [isOpen, setIsOpen] = useState(false) // Menu mobile
-  const [openCart, setOpenCart] = useState(false) // Drawer carrito
-  const [mounted, setMounted] = useState(false) // Evitar errores de hidratación
-  const [animate, setAnimate] = useState(false) // Animación del badge del carrito
-  const [searchQuery, setSearchQuery] = useState('') // Lógica de búsqueda
+  const [isOpen, setIsOpen] = useState(false)
+  const [openCart, setOpenCart] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [animate, setAnimate] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
 
   const router = useRouter()
   const totalItems = useCartStore((state) => state.getTotalItems())
+  const hasSearchQuery = useMemo(() => searchQuery.trim().length >= 2, [searchQuery])
 
-  // --- Efectos ---
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
@@ -32,21 +134,66 @@ export function Navbar() {
 
   useEffect(() => {
     if (!mounted || totalItems === 0) return
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnimate(true)
     const timeout = setTimeout(() => setAnimate(false), 400)
     return () => clearTimeout(timeout)
   }, [totalItems, mounted])
 
-  // --- Manejadores ---
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
+  useEffect(() => {
+    if (!hasSearchQuery) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
 
-    // Redirección con el parámetro de búsqueda
+    const controller = new AbortController()
+    const timeout = setTimeout(async () => {
+      try {
+        setIsSearching(true)
+        const response = await fetch(
+          `/api/search?q=${encodeURIComponent(searchQuery.trim())}`,
+          { signal: controller.signal }
+        )
+
+        if (!response.ok) {
+          throw new Error('Search request failed')
+        }
+
+        const data = (await response.json()) as { results: SearchResult[] }
+        setSearchResults(data.results ?? [])
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error searching products:', error)
+        }
+      } finally {
+        setIsSearching(false)
+      }
+    }, 220)
+
+    return () => {
+      controller.abort()
+      clearTimeout(timeout)
+    }
+  }, [hasSearchQuery, searchQuery])
+
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!searchQuery.trim()) {
+      toast.info('Escribe al menos un producto para buscar.')
+      return
+    }
+
     router.push(`/productos?search=${encodeURIComponent(searchQuery.trim())}`)
-    setSearchQuery('')
+    setShowSearchResults(false)
     setIsOpen(false)
+  }
+
+  const closeSearchResults = () => {
+    setShowSearchResults(false)
+    setSearchQuery('')
   }
 
   if (!mounted) return null
@@ -55,43 +202,44 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-[#E5DED4] bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 lg:px-8 lg:gap-8">
-
-          {/* Botón Menu Mobile */}
           <button
+            type="button"
             onClick={() => setIsOpen(true)}
-            className="lg:hidden text-[#2D241E] p-1"
+            className="p-1 text-[#2D241E] lg:hidden"
           >
             <Menu className="h-6 w-6" />
           </button>
 
-          {/* Logo */}
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-[0.25em] text-[#4A3728] transition-opacity hover:opacity-80"
-          >
-            SHINY
-          </Link>
+          <BrandLogo className="shrink-0" width={150} height={42} priority />
 
-          {/* Buscador Desktop - Funcional */}
-          <div className="hidden flex-1 px-6 lg:block">
+          <div className="relative hidden flex-1 px-6 lg:block">
             <form onSubmit={handleSearch} className="relative mx-auto max-w-md">
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="¿Qué estás buscando?"
+                onFocus={() => setShowSearchResults(true)}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Que estas buscando?"
                 className="h-10 w-full rounded-full border border-[#E5DED4] bg-[#FDFBF9] pl-5 pr-12 text-sm text-[#2D241E] outline-none transition focus:border-[#8B5E3C] focus:bg-white"
               />
-              <button 
+              <button
                 type="submit"
-                className="absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-[#4A3728] text-white transition hover:bg-[#8B5E3C]"
+                className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[#4A3728] text-white transition hover:bg-[#8B5E3C]"
               >
                 <Search className="h-4 w-4" />
               </button>
             </form>
+
+            {showSearchResults ? (
+              <SearchResultsDropdown
+                query={searchQuery}
+                results={searchResults}
+                loading={isSearching}
+                onSelect={closeSearchResults}
+              />
+            ) : null}
           </div>
 
-          {/* Navegación Desktop */}
           <nav className="hidden items-center gap-8 lg:flex">
             {navLinks.map((link) => (
               <Link
@@ -105,7 +253,6 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Acciones */}
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/cuenta"
@@ -114,46 +261,59 @@ export function Navbar() {
               <User className="h-5 w-5" />
             </Link>
 
-            {/* Carrito */}
             <button
+              type="button"
               onClick={() => setOpenCart(true)}
-              className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-[#4A3728] text-white transition-all hover:bg-[#2D241E] hover:scale-105"
+              className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-[#4A3728] text-white transition-all hover:scale-105 hover:bg-[#2D241E]"
             >
               <ShoppingBag className="h-4.5 w-4.5" />
-              
-              {totalItems > 0 && (
+
+              {totalItems > 0 ? (
                 <span
-                  className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B5E3C] border-2 border-white text-[9px] font-bold text-white transition-all ${
+                  className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#8B5E3C] text-[9px] font-bold text-white transition-all ${
                     animate ? 'scale-125' : 'scale-100'
                   }`}
                 >
                   {totalItems}
                 </span>
-              )}
+              ) : null}
             </button>
           </div>
         </div>
 
-        {/* Buscador Mobile - Aparece debajo del logo en móviles */}
-        <div className="border-t border-[#E5DED4] px-4 py-3 lg:hidden bg-white">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar productos..."
-              className="h-10 w-full rounded-full border border-[#E5DED4] bg-[#FDFBF9] px-4 text-sm outline-none focus:border-[#8B5E3C]"
-            />
-            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Search className="h-4 w-4 text-[#4A3728]" />
-            </button>
-          </form>
+        <div className="border-t border-[#E5DED4] bg-white px-4 py-3 lg:hidden">
+          <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onFocus={() => setShowSearchResults(true)}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Buscar productos..."
+                className="h-10 w-full rounded-full border border-[#E5DED4] bg-[#FDFBF9] px-4 text-sm outline-none focus:border-[#8B5E3C]"
+              />
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <Search className="h-4 w-4 text-[#4A3728]" />
+              </button>
+            </form>
+
+            {showSearchResults ? (
+              <SearchResultsDropdown
+                query={searchQuery}
+                results={searchResults}
+                loading={isSearching}
+                onSelect={closeSearchResults}
+              />
+            ) : null}
+          </div>
         </div>
       </header>
 
-      {/* --- MENU MOBILE DRAWER --- */}
       <div
-        className={`fixed inset-0 z-100 transition-visibility duration-300 ${
+        className={`fixed inset-0 z-[100] transition-[visibility] duration-300 ${
           isOpen ? 'visible' : 'invisible'
         }`}
       >
@@ -165,25 +325,29 @@ export function Navbar() {
         />
 
         <div
-          className={`absolute left-0 top-0 h-full w-[80%] max-w-xs bg-white p-8 shadow-2xl flex flex-col transition-transform duration-500 ease-out ${
+          className={`absolute left-0 top-0 flex h-full w-[80%] max-w-xs flex-col bg-white p-8 shadow-2xl transition-transform duration-500 ease-out ${
             isOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <div className="flex items-center justify-between mb-12">
-            <span className="text-xl font-bold tracking-[0.2em] text-[#4A3728]">SHINY</span>
-            <button onClick={() => setIsOpen(false)} className="p-2 rounded-full bg-[#F5F0EB]">
+          <div className="mb-12 flex items-center justify-between">
+            <BrandLogo width={148} height={40} />
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="rounded-full bg-[#F5F0EB] p-2"
+            >
               <X className="h-5 w-5 text-[#4A3728]" />
             </button>
           </div>
 
           <nav className="flex flex-col gap-8">
-            {navLinks.map((link, i) => (
+            {navLinks.map((link, index) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
                 className="text-2xl font-bold text-[#2D241E] transition-transform hover:translate-x-2"
-                style={{ transitionDelay: `${i * 50}ms` }}
+                style={{ transitionDelay: `${index * 50}ms` }}
               >
                 {link.label}
               </Link>
@@ -192,14 +356,13 @@ export function Navbar() {
 
           <div className="mt-auto border-t border-[#E5DED4] pt-8">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#8B5E3C]">
-              Síguenos en Instagram
+              Siguenos en Instagram
             </p>
             <p className="mt-2 text-xs text-[#5C4D42]">@shiny.fitness</p>
           </div>
         </div>
       </div>
 
-      {/* Drawer del Carrito */}
       <CartDrawer open={openCart} onClose={() => setOpenCart(false)} />
     </>
   )

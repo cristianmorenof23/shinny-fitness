@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { CheckoutPageClient } from '@/app/components/checkout/checkout-page'
 import { createMetadata } from '@/app/lib/seo'
 
 export const metadata: Metadata = createMetadata({
@@ -9,5 +10,5 @@ export const metadata: Metadata = createMetadata({
 })
 
 export default function CheckoutPage() {
-  return <div>CheckoutPage</div>
+  return <CheckoutPageClient />
 }

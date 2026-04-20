@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type CartItem = {
-  id: number
+  id: string
   name: string
   slug: string
   price: number
@@ -17,9 +17,9 @@ export type CartItem = {
 type CartStore = {
   items: CartItem[]
   addItem: (item: Omit<CartItem, 'quantity'>) => void
-  removeItem: (id: number, size: string, color: string) => void
-  increaseQuantity: (id: number, size: string, color: string) => void
-  decreaseQuantity: (id: number, size: string, color: string) => void
+  removeItem: (id: string, size: string, color: string) => void
+  increaseQuantity: (id: string, size: string, color: string) => void
+  decreaseQuantity: (id: string, size: string, color: string) => void
   clearCart: () => void
   getTotalItems: () => number
   getTotalPrice: () => number

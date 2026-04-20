@@ -3,7 +3,6 @@
 import { prisma } from '@/app/lib/prisma'
 import { requireAdmin } from '@/app/lib/auth'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
 const createProductSchema = z.object({
@@ -99,5 +98,9 @@ export async function createProduct(data: {
 
   revalidatePath('/admin/productos')
   revalidatePath('/productos')
-  redirect('/admin/productos')
+
+  return {
+    ok: true,
+    redirectTo: '/admin/productos',
+  }
 }

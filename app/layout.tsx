@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AppToaster } from "./components/ui/app-toaster";
 import { Navbar } from "./components/layout/nav-bar";
 import { Footer } from "./components/layout/footer";
 import { rootMetadata } from "./lib/seo";
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Navbar />
         {children}
+        <AppToaster />
         <Footer />
       </body>
     </html>

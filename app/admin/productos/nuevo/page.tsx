@@ -70,6 +70,30 @@ export default async function NewProductPage() {
             </a>
           </div>
         </div>
+      ) : categories.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 shadow-sm">
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Primero crea una categoria
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-neutral-600">
+            Los productos necesitan una categoria activa para poder guardarse y
+            mostrarse correctamente en la tienda.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <a
+              href="/admin/categorias"
+              className="inline-flex rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              Ir a categorias
+            </a>
+            <a
+              href="/admin/categorias/nueva"
+              className="inline-flex rounded-xl border border-neutral-300 bg-white px-5 py-3 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+            >
+              Crear nueva categoria
+            </a>
+          </div>
+        </div>
       ) : (
         <ProductForm categories={categories} />
       )}

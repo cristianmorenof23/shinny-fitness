@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Minus, Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCartStore } from '@/app/store/cart-store'
 
 function formatPrice(value: number) {
@@ -10,6 +11,11 @@ function formatPrice(value: number) {
     currency: 'ARS',
     maximumFractionDigits: 0,
   }).format(value)
+}
+
+function formatVariantLabel(color?: string, size?: string) {
+  const parts = [color, size].filter(Boolean)
+  return parts.length > 0 ? parts.join(' - ') : 'Sin variante'
 }
 
 export default function CartPage() {
@@ -29,24 +35,24 @@ export default function CartPage() {
           </span>
 
           <h1 className="mt-3 text-3xl font-semibold text-[#2f241d] sm:text-4xl">
-            Revisá tus productos antes de continuar
+            Revisa tus productos antes de continuar
           </h1>
         </div>
 
         {items.length === 0 ? (
           <div className="rounded-[28px] border border-[#eadfd5] bg-white p-10 text-center shadow-[0_10px_30px_rgba(91,67,50,0.05)]">
             <h2 className="text-2xl font-semibold text-[#2f241d]">
-              Tu carrito está vacío
+              Tu carrito esta vacio
             </h2>
             <p className="mt-3 text-sm text-[#6f5b4d]">
-              Agregá algunos productos para empezar tu compra.
+              Agrega algunos productos para empezar tu compra.
             </p>
 
             <Link
               href="/productos"
               className="mt-6 inline-flex rounded-full bg-[#7b5a43] px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-[#6b4d39]"
             >
-              Ir al catálogo
+              Ir al catalogo
             </Link>
           </div>
         ) : (
@@ -54,7 +60,7 @@ export default function CartPage() {
             <div className="space-y-4">
               {items.map((item) => (
                 <article
-                  key={item.id}
+                  key={`${item.id}-${item.selectedSize}-${item.selectedColor}`}
                   className="flex flex-col gap-4 rounded-3xl border border-[#eadfd5] bg-white p-5 shadow-[0_10px_30px_rgba(91,67,50,0.05)] sm:flex-row"
                 >
                   <div
@@ -67,7 +73,10 @@ export default function CartPage() {
                       <h2 className="text-lg font-semibold text-[#2f241d]">
                         {item.name}
                       </h2>
-                      <p className="mt-1 text-sm text-[#6f5b4d]">
+                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#8b684d]">
+                        {formatVariantLabel(item.selectedColor, item.selectedSize)}
+                      </p>
+                      <p className="mt-2 text-sm text-[#6f5b4d]">
                         {formatPrice(item.price)}
                       </p>
                     </div>
@@ -77,8 +86,13 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            decreaseQuantity(item.id, item.selectedSize, item.selectedColor)
-                          } className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
+                            decreaseQuantity(
+                              item.id,
+                              item.selectedSize,
+                              item.selectedColor
+                            )
+                          }
+                          className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -90,8 +104,13 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            increaseQuantity(item.id, item.selectedSize, item.selectedColor)
-                          } className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
+                            increaseQuantity(
+                              item.id,
+                              item.selectedSize,
+                              item.selectedColor
+                            )
+                          }
+                          className="p-3 text-[#4b3425] transition hover:bg-[#f3e6dc]"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
@@ -99,9 +118,11 @@ export default function CartPage() {
 
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           removeItem(item.id, item.selectedSize, item.selectedColor)
-                        } className="inline-flex items-center gap-2 rounded-full border border-[#e4d2c4] px-4 py-2 text-sm font-medium text-[#7b5a43] transition hover:bg-[#f8efe7]"
+                          toast.info(`${item.name} se elimino del carrito.`)
+                        }}
+                        className="inline-flex items-center gap-2 rounded-full border border-[#e4d2c4] px-4 py-2 text-sm font-medium text-[#7b5a43] transition hover:bg-[#f8efe7]"
                       >
                         <Trash2 className="h-4 w-4" />
                         Eliminar
@@ -126,7 +147,7 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span>Envío</span>
+                  <span>Envio</span>
                   <span className="font-medium text-[#2f241d]">A calcular</span>
                 </div>
 
@@ -142,16 +163,19 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
+              <Link
+                href="/checkout"
                 className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[#7b5a43] px-5 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-[#6b4d39]"
               >
                 Continuar compra
-              </button>
+              </Link>
 
               <button
                 type="button"
-                onClick={clearCart}
+                onClick={() => {
+                  clearCart()
+                  toast.info('Se vacio el carrito.')
+                }}
                 className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-[#dccbbc] px-5 py-3 text-sm font-medium text-[#4b3425] transition hover:bg-[#f8efe7]"
               >
                 Vaciar carrito

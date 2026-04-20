@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useCartStore } from '@/app/store/cart-store'
 
 type Product = {
-  id: number
+  id: string
   name: string
   slug: string
   price: number
@@ -21,7 +21,7 @@ type Filters = {
 
 const products: Product[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Top Motion Nude',
     slug: 'top-motion-nude',
     price: 25990,
@@ -30,7 +30,7 @@ const products: Product[] = [
     size: ['S', 'M'],
   },
   {
-    id: 2,
+    id: '2',
     name: 'Calza Rise Brown',
     slug: 'calza-rise-brown',
     price: 38990,
@@ -39,7 +39,7 @@ const products: Product[] = [
     size: ['M', 'L'],
   },
   {
-    id: 3,
+    id: '3',
     name: 'Conjunto Balance Sand',
     slug: 'conjunto-balance-sand',
     price: 54990,
@@ -48,7 +48,7 @@ const products: Product[] = [
     size: ['S', 'M', 'L'],
   },
   {
-    id: 4,
+    id: '4',
     name: 'Short Energy Black',
     slug: 'short-energy-black',
     price: 28990,
