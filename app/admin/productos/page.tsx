@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Prisma } from '../../../generated/prisma/client'
 import AdminPagination from '@/app/components/admin/admin-pagination'
+import { AdminFiltersForm } from '@/app/components/admin/admin-filters-form'
 import ProductsTable from '@/app/components/admin/products-table'
 import { requireAdmin } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/prisma'
@@ -156,7 +157,10 @@ export default async function ProductosPage({
         </Link>
       </div>
 
-      <form className="grid gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_220px_180px_auto]">
+      <AdminFiltersForm
+        clearHref="/admin/productos"
+        className="grid gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_220px_180px_auto]"
+      >
         <input
           type="text"
           name="q"
@@ -187,22 +191,7 @@ export default async function ProductosPage({
           <option value="activos">Activos</option>
           <option value="inactivos">Inactivos</option>
         </select>
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
-          >
-            Filtrar
-          </button>
-          <Link
-            href="/admin/productos"
-            className="inline-flex items-center justify-center rounded-xl border border-neutral-300 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-          >
-            Limpiar
-          </Link>
-        </div>
-      </form>
+      </AdminFiltersForm>
 
       {errorMessage ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-950 shadow-sm">

@@ -21,14 +21,40 @@ function normalizeMode(value?: string | null): GoCuotasMode {
   return 'disabled'
 }
 
+function normalizePaymentLink(value?: string | null) {
+  const rawValue = value?.trim()
+
+  if (!rawValue) {
+    return 'https://gocuotas.com/206133'
+  }
+
+  if (/^https?:\/\//i.test(rawValue)) {
+    return rawValue
+  }
+
+  if (rawValue.startsWith('gocuotas.com/')) {
+    return `https://${rawValue}`
+  }
+
+  if (/^\d+$/.test(rawValue)) {
+    return `https://gocuotas.com/${rawValue}`
+  }
+
+  return rawValue
+}
+
 export function getGoCuotasConfig(): GoCuotasConfig {
-  const mode = normalizeMode(process.env.GOCUOTAS_MODE)
+  const rawMode = normalizeMode(process.env.GOCUOTAS_MODE)
   const installments = Number(process.env.GOCUOTAS_INSTALLMENTS ?? '3')
-  const paymentLinkUrl = process.env.GOCUOTAS_PAYMENT_LINK_URL ?? null
+  const paymentLinkUrl = normalizePaymentLink(
+    process.env.GOCUOTAS_PAYMENT_LINK_URL
+  )
   const merchantId = process.env.GOCUOTAS_MERCHANT_ID ?? null
   const publicKey = process.env.GOCUOTAS_PUBLIC_KEY ?? null
   const apiKey = process.env.GOCUOTAS_API_KEY ?? null
   const secretKey = process.env.GOCUOTAS_SECRET_KEY ?? null
+  const mode =
+    rawMode === 'disabled' && paymentLinkUrl ? 'payment_link' : rawMode
 
   const enabled =
     mode === 'payment_link'
@@ -70,7 +96,7 @@ export function getGoCuotasCheckoutState() {
     badge: 'Disponible',
     description:
       config.mode === 'payment_link'
-        ? `GoCuotas esta configurado con link de pago para ${config.installments} cuotas.`
+        ? `GoCuotas esta disponible mediante su plataforma externa para ${config.installments} cuotas. El pedido queda registrado antes de redirigir.`
         : `GoCuotas esta listo para una integracion custom en ${config.installments} cuotas.`,
   } as const
 }

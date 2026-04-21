@@ -6,10 +6,11 @@ import {
   getDatabaseCapacityMessage,
   isDatabaseCapacityError,
 } from '@/app/lib/database-errors'
-import { getGoCuotasConfig } from '@/app/lib/gocuotas'
+import { getTransferDiscountAmount } from '@/app/lib/payments'
+import { siteConfig } from '@/app/lib/seo'
 import { getStorefrontProductsByIds } from '@/app/lib/storefront'
 
-const goCuotasCheckoutSchema = z.object({
+const transferCheckoutSchema = z.object({
   customer: z.object({
     name: z.string().min(2),
     email: z.email(),
@@ -17,7 +18,7 @@ const goCuotasCheckoutSchema = z.object({
     address: z.string().optional(),
     notes: z.string().optional(),
   }),
-  paymentMethod: z.literal('gocuotas'),
+  paymentMethod: z.literal('transferencia'),
   items: z
     .array(
       z.object({
@@ -34,22 +35,15 @@ function normalizeVariantValue(value?: string) {
   return value && value !== 'Unico' ? value : null
 }
 
+function resolveReturnOrigin(origin: string) {
+  return origin.includes('localhost') || origin.includes('127.0.0.1')
+    ? siteConfig.url
+    : origin
+}
+
 export async function POST(request: Request) {
   try {
-    const body = goCuotasCheckoutSchema.parse(await request.json())
-
-    const config = getGoCuotasConfig()
-
-    if (!config.enabled) {
-      return NextResponse.json(
-        {
-          error:
-            'GoCuotas todavia no esta habilitado para esta tienda. Falta configurar el alta comercial y las credenciales reales.',
-        },
-        { status: 503 }
-      )
-    }
-
+    const body = transferCheckoutSchema.parse(await request.json())
     const productIds = body.items.map((item) => item.productId)
     const products = await getStorefrontProductsByIds(productIds)
 
@@ -111,7 +105,8 @@ export async function POST(request: Request) {
       return acc + Number(item.unitPrice) * item.quantity
     }, 0)
 
-    const externalReference = `gocuotas-${randomUUID()}`
+    const total = getTransferDiscountAmount(subtotal)
+    const externalReference = `transfer-${randomUUID()}`
 
     await prisma.order.create({
       data: {
@@ -121,8 +116,8 @@ export async function POST(request: Request) {
         customerAddress: body.customer.address || null,
         notes: body.customer.notes || null,
         subtotal,
-        total: subtotal,
-        paymentMethod: 'gocuotas',
+        total,
+        paymentMethod: 'transferencia',
         externalReference,
         items: {
           create: orderItemsData,
@@ -130,29 +125,21 @@ export async function POST(request: Request) {
       },
     })
 
-    if (config.mode === 'payment_link' && config.paymentLinkUrl) {
-      return NextResponse.json({
-        checkoutUrl: config.paymentLinkUrl,
-        externalReference,
-      })
-    }
+    const origin = new URL(request.url).origin
+    const returnOrigin = resolveReturnOrigin(origin)
 
-    return NextResponse.json(
-      {
-        error:
-          'GoCuotas esta configurado en modo custom, pero falta implementar el flujo segun la documentacion del comercio.',
-      },
-      { status: 501 }
-    )
+    return NextResponse.json({
+      checkoutUrl: `${returnOrigin}/success?status=pending&external_reference=${externalReference}&payment_method=transferencia`,
+    })
   } catch (error) {
-    console.error('Error starting GoCuotas checkout:', error)
+    console.error('Error starting transfer checkout:', error)
 
     const message =
       isDatabaseCapacityError(error)
-        ? getDatabaseCapacityMessage('preparar GoCuotas')
+        ? getDatabaseCapacityMessage('preparar la transferencia')
         : error instanceof Error
           ? error.message
-          : 'No pudimos iniciar GoCuotas. Revisa la configuracion del comercio e intenta nuevamente.'
+          : 'No pudimos preparar la opcion de transferencia. Intenta nuevamente.'
 
     return NextResponse.json(
       {

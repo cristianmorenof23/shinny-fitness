@@ -1,8 +1,8 @@
-const CONTACT_PHONE_RAW = '+54 9 351 000 0000'
+const CONTACT_PHONE_RAW = '+54 9 351 209-1800'
 
 export const contactConfig = {
   whatsappDisplay: CONTACT_PHONE_RAW,
-  whatsappNumber: '5493510000000',
+  whatsappNumber: '5493512091800',
   email: 'hola@shiny.com.ar',
   instagram: '@shiny.fitness',
   instagramUrl: 'https://instagram.com/shiny.fitness',

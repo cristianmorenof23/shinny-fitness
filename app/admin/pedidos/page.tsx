@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Prisma } from '../../../generated/prisma/client'
 import AdminPagination from '@/app/components/admin/admin-pagination'
+import { AdminFiltersForm } from '@/app/components/admin/admin-filters-form'
 import OrdersTable from '@/app/components/admin/orders-table'
 import { requireAdmin } from '@/app/lib/auth'
 import { isDatabaseCapacityError, isDatabaseSchemaError } from '@/app/lib/database-errors'
@@ -77,6 +78,10 @@ export default async function PedidosPage({
             ? {
                 equals: 'gocuotas',
               }
+            : params.pago === 'transferencia'
+              ? {
+                  equals: 'transferencia',
+                }
             : undefined,
       mercadopagoStatus:
         params.pago === 'approved'
@@ -174,7 +179,10 @@ export default async function PedidosPage({
         </p>
       </div>
 
-      <form className="grid gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_220px_220px_auto]">
+      <AdminFiltersForm
+        clearHref="/admin/pedidos"
+        className="grid gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_220px_220px_auto]"
+      >
         <input
           type="text"
           name="q"
@@ -204,27 +212,13 @@ export default async function PedidosPage({
           <option value="">Todos los pagos</option>
           <option value="mercadopago">Mercado Pago</option>
           <option value="gocuotas">GoCuotas</option>
+          <option value="transferencia">Transferencia</option>
           <option value="approved">Cobro aprobado</option>
           <option value="pending">Cobro pendiente</option>
           <option value="rejected">Cobro rechazado</option>
           <option value="sin_novedad">Sin novedad</option>
         </select>
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
-          >
-            Filtrar
-          </button>
-          <Link
-            href="/admin/pedidos"
-            className="inline-flex items-center justify-center rounded-xl border border-neutral-300 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-          >
-            Limpiar
-          </Link>
-        </div>
-      </form>
+      </AdminFiltersForm>
 
       {errorMessage ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-950 shadow-sm">

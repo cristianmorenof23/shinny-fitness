@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
 import { ClearCartOnSuccess } from '@/app/components/checkout/clear-cart-on-success'
 import { buildWhatsAppUrl } from '@/app/lib/contact'
+import { getTransferSavingsAmount, transferConfig } from '@/app/lib/payments'
 import { prisma } from '@/app/lib/prisma'
 import { formatArs } from '@/app/lib/pricing'
 import { createMetadata } from '@/app/lib/seo'
@@ -52,7 +53,11 @@ function formatVariantLabel(color?: string | null, size?: string | null) {
 export default async function SuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; external_reference?: string }>
+  searchParams: Promise<{
+    status?: string
+    external_reference?: string
+    payment_method?: string
+  }>
 }) {
   const params = await searchParams
   const isApproved = params.status === 'approved'
@@ -78,6 +83,9 @@ export default async function SuccessPage({
           return null
         })
     : null
+  const paymentMethod = order?.paymentMethod ?? params.payment_method ?? null
+  const isTransfer = paymentMethod === 'transferencia'
+  const isGoCuotas = paymentMethod === 'gocuotas'
 
   return (
     <main className="min-h-[70vh] bg-[#fcf8f4] py-16">
@@ -205,6 +213,74 @@ export default async function SuccessPage({
           </div>
         ) : null}
 
+        {isTransfer && order ? (
+          <div className="mt-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+              Transferencia bancaria
+            </p>
+            <h2 className="mt-3 text-xl font-semibold text-[#2f241d]">
+              Completa el pago con descuento
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#4b3425]">
+              Te reservamos el {transferConfig.discountPercentage}% OFF pagando al alias{' '}
+              <span className="font-semibold">{transferConfig.alias}</span>. El total con descuento
+              para este pedido es{' '}
+              <span className="font-semibold">{formatArs(order.total)}</span> y
+              ahorras{' '}
+              <span className="font-semibold">
+                {formatArs(getTransferSavingsAmount(order.subtotal))}
+              </span>.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[#4b3425]">
+              Una vez hecha la transferencia, envianos el comprobante por WhatsApp
+              para confirmar el pago y coordinar el envio.
+            </p>
+            <Link
+              href={buildWhatsAppUrl(
+                `Hola Shiny Fitness, ya hice la transferencia de mi pedido ${order.externalReference ?? order.id} al alias ${transferConfig.alias}. Quiero enviar el comprobante y coordinar el envio.`
+              )}
+              target="_blank"
+              className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-[#4A3728] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#2d241e]"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Enviar comprobante por WhatsApp
+            </Link>
+          </div>
+        ) : null}
+
+        {isGoCuotas && order ? (
+          <div className="mt-8 rounded-3xl border border-[#eadfd5] bg-[#fffaf6] p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8b684d]">
+              GoCuotas
+            </p>
+            <h2 className="mt-3 text-xl font-semibold text-[#2f241d]">
+              Tu pedido quedo registrado para pago externo
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#4b3425]">
+              Registramos tu pedido con referencia{' '}
+              <span className="font-semibold">
+                {order.externalReference ?? order.id}
+              </span>{' '}
+              y quedo pendiente hasta validar la operacion realizada en
+              GoCuotas.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[#4b3425]">
+              Si necesitas ayuda para confirmar el pago o coordinar el envio,
+              puedes escribirnos por WhatsApp y te acompanamos.
+            </p>
+            <Link
+              href={buildWhatsAppUrl(
+                `Hola Shiny Fitness, inicie un pago con GoCuotas para mi pedido ${order.externalReference ?? order.id} y quiero confirmar el estado.`
+              )}
+              target="_blank"
+              className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-[#4A3728] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#2d241e]"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Consultar pago por WhatsApp
+            </Link>
+          </div>
+        ) : null}
+
         <div className="mt-8 rounded-3xl border border-dashed border-[#dccbbc] bg-[#fffaf6] p-5 text-center">
           <p className="text-sm text-[#6f5b4d]">
             Si no vuelves automaticamente despues del pago, tambien puedes regresar
@@ -213,7 +289,7 @@ export default async function SuccessPage({
           {order ? (
             <Link
               href={buildWhatsAppUrl(
-                `Hola Shiny Fitness, ya hice mi compra${order.externalReference ? ` (${order.externalReference})` : ''} y queria consultar el seguimiento.`
+                `Hola Shiny Fitness, ya hice mi compra${order.externalReference ? ` (${order.externalReference})` : ''} y queria consultar el seguimiento y el envio.`
               )}
               target="_blank"
               className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-[#dccbbc] px-5 py-3 text-sm font-medium text-[#4b3425] transition hover:bg-[#f8efe7]"

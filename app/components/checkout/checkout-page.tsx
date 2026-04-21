@@ -3,8 +3,22 @@
 import { useMemo, useState, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CheckCircle2, CreditCard, LoaderCircle, ShieldCheck } from 'lucide-react'
+import {
+  BadgePercent,
+  CheckCircle2,
+  CreditCard,
+  Landmark,
+  LoaderCircle,
+  MessageCircle,
+  ShieldCheck,
+} from 'lucide-react'
 import { toast } from 'sonner'
+import { buildWhatsAppUrl } from '@/app/lib/contact'
+import {
+  getTransferDiscountAmount,
+  getTransferSavingsAmount,
+  transferConfig,
+} from '@/app/lib/payments'
 import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import { useCartStore } from '@/app/store/cart-store'
 
@@ -14,7 +28,7 @@ type CheckoutResponse = {
   error?: string
 }
 
-type CheckoutPaymentMethod = 'mercadopago' | 'gocuotas'
+type CheckoutPaymentMethod = 'mercadopago' | 'gocuotas' | 'transferencia'
 
 type GoCuotasCheckoutState = {
   enabled: boolean
@@ -50,6 +64,9 @@ export function CheckoutPageClient({
   })
 
   const installmentPrice = useMemo(() => getInstallmentPrice(total), [total])
+  const transferTotal = useMemo(() => getTransferDiscountAmount(total), [total])
+  const transferSavings = useMemo(() => getTransferSavingsAmount(total), [total])
+  const finalTotal = paymentMethod === 'transferencia' ? transferTotal : total
 
   function updateField(field: keyof typeof customer, value: string) {
     setCustomer((current) => ({
@@ -75,7 +92,9 @@ export function CheckoutPageClient({
         const endpoint =
           paymentMethod === 'gocuotas'
             ? '/api/gocuotas/checkout'
-            : '/api/mercadopago/preference'
+            : paymentMethod === 'transferencia'
+              ? '/api/transfer/checkout'
+              : '/api/mercadopago/preference'
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -109,6 +128,8 @@ export function CheckoutPageClient({
         toast.success(
           paymentMethod === 'gocuotas'
             ? 'Redirigiendo a GoCuotas...'
+            : paymentMethod === 'transferencia'
+              ? 'Mostrando instrucciones para transferencia...'
             : 'Redirigiendo a Mercado Pago...'
         )
         window.location.href = redirectUrl
@@ -279,6 +300,39 @@ export function CheckoutPageClient({
                     <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-[#8b684d]">
                       Referencia comercial: {goCuotas.installments} cuotas sin interes
                     </p>
+                    {goCuotas.enabled ? (
+                      <p className="mt-3 text-xs leading-6 text-[#6f5b4d]">
+                        Seras redirigida a GoCuotas para completar el pago. Tu
+                        pedido quedara registrado como pendiente hasta validar la
+                        operacion.
+                      </p>
+                    ) : null}
+                  </div>
+                </label>
+
+                <label className="flex cursor-pointer items-start gap-4 rounded-3xl border border-[#ddccbd] p-5 transition hover:border-[#8b684d]">
+                  <input
+                    type="radio"
+                    checked={paymentMethod === 'transferencia'}
+                    onChange={() => setPaymentMethod('transferencia')}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <Landmark className="h-5 w-5 text-[#4b3425]" />
+                      <div>
+                        <p className="font-semibold text-[#2f241d]">
+                          Transferencia bancaria
+                        </p>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+                          {transferConfig.discountPercentage}% OFF inmediato
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm text-[#6f5b4d]">
+                      Abonas por transferencia y te respetamos el descuento al
+                      instante. Alias para el pago: <span className="font-semibold text-[#2f241d]">{transferConfig.alias}</span>.
+                    </p>
                   </div>
                 </label>
               </section>
@@ -357,6 +411,10 @@ export function CheckoutPageClient({
                         goCuotas.enabled ? '' : 'opacity-75'
                       }`}
                     />
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[#ddccbd] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6b4d39]">
+                      <Landmark className="h-3.5 w-3.5" />
+                      Transferencia
+                    </span>
                   </div>
                 </div>
 
@@ -370,6 +428,20 @@ export function CheckoutPageClient({
                 <div className="flex items-center justify-between">
                   <span>Envio</span>
                   <span className="font-medium text-[#2f241d]">A coordinar</span>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+                    Transferencia bancaria
+                  </p>
+                  <p className="mt-2 text-sm text-[#2f241d]">
+                    {transferConfig.discountPercentage}% OFF pagando al alias{' '}
+                    <span className="font-semibold">{transferConfig.alias}</span>
+                  </p>
+                  <p className="mt-2 text-xs text-emerald-800">
+                    Ahorras {formatArs(transferSavings)} y te queda en{' '}
+                    <span className="font-semibold">{formatArs(transferTotal)}</span>
+                  </p>
                 </div>
 
                 <div className="rounded-2xl bg-[#fcf3ec] px-4 py-3">
@@ -395,14 +467,43 @@ export function CheckoutPageClient({
                 </div>
 
                 <div className="border-t border-[#eadfd5] pt-4">
+                  {paymentMethod === 'transferencia' ? (
+                    <div className="mb-4 rounded-2xl bg-[#fffaf6] px-4 py-3 text-sm text-[#6f5b4d]">
+                      <p className="inline-flex items-center gap-2 text-[#4b3425]">
+                        <BadgePercent className="h-4 w-4" />
+                        El total ya contempla el {transferConfig.discountPercentage}% OFF por transferencia.
+                      </p>
+                    </div>
+                  ) : null}
+
                   <div className="flex items-center justify-between">
                     <span className="text-base font-semibold text-[#2f241d]">
                       Total
                     </span>
                     <span className="text-base font-semibold text-[#2f241d]">
-                      {formatArs(total)}
+                      {formatArs(finalTotal)}
                     </span>
                   </div>
+                </div>
+
+                <div className="rounded-2xl border border-dashed border-[#dccbbc] px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8b684d]">
+                    Envio
+                  </p>
+                  <p className="mt-2 text-sm text-[#6f5b4d]">
+                    El envio se coordina por WhatsApp una vez acreditado el pago.
+                  </p>
+                  <a
+                    href={buildWhatsAppUrl(
+                      'Hola Shiny Fitness, quiero consultar el envio de mi compra.'
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#4A3728] transition hover:text-[#8B5E3C]"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Consultar por WhatsApp
+                  </a>
                 </div>
               </div>
             </aside>

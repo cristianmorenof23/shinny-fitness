@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ShoppingBag } from 'lucide-react'
+import { BadgePercent, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatArs } from '@/app/lib/pricing'
+import { getTransferDiscountAmount, transferConfig } from '@/app/lib/payments'
 import { useCartStore } from '@/app/store/cart-store'
 
 type ProductCardVariant = {
@@ -214,6 +216,19 @@ export function ProductCardPurchase({
             : 'Selecciona color y talle antes de agregar al carrito.'}
         </p>
       ) : null}
+
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+        <p className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.15em] text-emerald-700">
+          <BadgePercent className="h-3.5 w-3.5" />
+          {transferConfig.discountPercentage}% off por transferencia
+        </p>
+        <p className="mt-1">
+          Te queda en{' '}
+          <span className="font-semibold">
+            {formatArs(getTransferDiscountAmount(product.price))}
+          </span>
+        </p>
+      </div>
 
       <div className="flex flex-col gap-2">
         <button
