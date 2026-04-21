@@ -4,6 +4,10 @@ import { Mail, MessageCircle } from 'lucide-react'
 import { OrderStatusForm } from '@/app/components/admin/order-status-form'
 import { requireAdmin } from '@/app/lib/auth'
 import { buildWhatsAppUrl } from '@/app/lib/contact'
+import {
+  getPaymentMethodLabel,
+  getPaymentStatusMeta,
+} from '@/app/lib/order-payments'
 import { prisma } from '@/app/lib/prisma'
 
 function formatPrice(value: number | { toString(): string }) {
@@ -44,6 +48,12 @@ export default async function PedidosSlugPage({
   if (!order) {
     notFound()
   }
+
+  const paymentStatus = getPaymentStatusMeta({
+    paymentMethod: order.paymentMethod,
+    orderStatus: order.status,
+    mercadopagoStatus: order.mercadopagoStatus,
+  })
 
   return (
     <div className="space-y-8">
@@ -173,16 +183,32 @@ export default async function PedidosSlugPage({
               </p>
               <p>
                 <span className="font-medium text-neutral-900">Metodo:</span>{' '}
-                {order.paymentMethod ?? 'No definido'}
+                {getPaymentMethodLabel(order.paymentMethod)}
               </p>
               <p>
-                <span className="font-medium text-neutral-900">Mercado Pago:</span>{' '}
-                {order.mercadopagoStatus ?? 'Sin novedad'}
+                <span className="font-medium text-neutral-900">
+                  Estado de pago:
+                </span>{' '}
+                {paymentStatus.label}
               </p>
               <p>
                 <span className="font-medium text-neutral-900">Referencia:</span>{' '}
                 {order.externalReference ?? 'Sin referencia'}
               </p>
+
+              {order.paymentMethod === 'gocuotas' ? (
+                <p className="rounded-2xl border border-[#eadfd5] bg-[#fffaf6] px-4 py-3 text-sm leading-6 text-[#6f5b4d]">
+                  Este pedido salio a GoCuotas y queda pendiente hasta que
+                  validen la operacion manualmente desde el panel.
+                </p>
+              ) : null}
+
+              {order.paymentMethod === 'transferencia' ? (
+                <p className="rounded-2xl border border-[#eadfd5] bg-[#fffaf6] px-4 py-3 text-sm leading-6 text-[#6f5b4d]">
+                  Este pedido se genero por transferencia bancaria. Marca el
+                  pedido como pagado cuando recibas y valides el comprobante.
+                </p>
+              ) : null}
 
               <div className="border-t border-neutral-200 pt-4">
                 <OrderStatusForm orderId={order.id} currentStatus={order.status} />

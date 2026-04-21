@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { Mail, MessageCircle } from 'lucide-react'
 import { buildWhatsAppUrl } from '@/app/lib/contact'
+import {
+  getPaymentMethodLabel,
+  getPaymentStatusMeta,
+} from '@/app/lib/order-payments'
 
 type AdminOrder = {
   id: string
@@ -90,6 +94,11 @@ export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
           <tbody>
             {orders.map((order) => {
               const status = getStatusLabel(order.status)
+              const paymentStatus = getPaymentStatusMeta({
+                paymentMethod: order.paymentMethod,
+                orderStatus: order.status,
+                mercadopagoStatus: order.mercadopagoStatus,
+              })
 
               return (
                 <tr
@@ -102,7 +111,7 @@ export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
                         #{order.id.slice(-8).toUpperCase()}
                       </p>
                       <p className="text-xs text-neutral-500">
-                        {order.paymentMethod ?? 'Sin metodo'}
+                        {getPaymentMethodLabel(order.paymentMethod)}
                       </p>
                     </div>
                   </td>
@@ -134,8 +143,12 @@ export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
                     </span>
                   </td>
 
-                  <td className="px-4 py-4 text-neutral-700">
-                    {order.mercadopagoStatus ?? 'Sin novedad'}
+                  <td className="px-4 py-4">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${paymentStatus.className}`}
+                    >
+                      {paymentStatus.label}
+                    </span>
                   </td>
 
                   <td className="px-4 py-4 text-neutral-700">
