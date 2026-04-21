@@ -1,7 +1,6 @@
-import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { ProductPurchasePanel } from '@/app/components/product/product-purchase-panel'
+import { ProductDetailView } from '@/app/components/product/product-detail-view'
 import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import { createMetadata, siteConfig, truncateDescription } from '@/app/lib/seo'
 import { getStorefrontProductBySlug } from '@/app/lib/storefront'
@@ -74,34 +73,26 @@ export default async function ProductoSlugPage({
   return (
     <main className="min-h-screen bg-[#FDFBF9]">
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 lg:grid-cols-2 lg:px-8">
-        <div className="space-y-4">
-          <div className="relative aspect-4/5 overflow-hidden rounded-3xl bg-white">
-            <Image
-              src={mainImage}
-              alt={product.name}
-              fill
-              className="object-cover"
-            />
-          </div>
-
-          {product.images.length > 1 ? (
-            <div className="grid grid-cols-4 gap-3">
-              {product.images.map((image) => (
-                <div
-                  key={image.id}
-                  className="relative aspect-square overflow-hidden rounded-2xl bg-white"
-                >
-                  <Image
-                    src={image.url}
-                    alt={image.alt || product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <ProductDetailView
+          product={{
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            price: Number(product.price),
+            image: mainImage,
+          }}
+          images={product.images.map((image) => ({
+            id: image.id,
+            url: image.url,
+            alt: image.alt,
+          }))}
+          variants={product.variants.map((variant) => ({
+            id: variant.id,
+            color: variant.color,
+            size: variant.size,
+            stock: variant.stock,
+          }))}
+        />
 
         <div className="space-y-5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8B5E3C]">
@@ -136,22 +127,6 @@ export default async function ProductoSlugPage({
           {product.shortDescription ? (
             <p className="text-base text-[#7A6A5F]">{product.shortDescription}</p>
           ) : null}
-
-          <ProductPurchasePanel
-            product={{
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              price: Number(product.price),
-              image: mainImage,
-            }}
-            variants={product.variants.map((variant) => ({
-              id: variant.id,
-              color: variant.color,
-              size: variant.size,
-              stock: variant.stock,
-            }))}
-          />
 
           <div className="rounded-2xl border border-[#E5DED4] bg-white p-5">
             <h2 className="mb-2 text-lg font-semibold text-[#4A3728]">

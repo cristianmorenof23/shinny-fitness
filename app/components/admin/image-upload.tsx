@@ -6,6 +6,7 @@ import Image from 'next/image'
 export type UploadedImage = {
   url: string
   publicId: string
+  color?: string
   alt?: string
 }
 
@@ -49,13 +50,19 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
         }}
       >
         {({ open }) => (
-          <button
-            type="button"
-            onClick={() => open()}
-            className="rounded-xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white hover:opacity-90"
-          >
-            Subir imágenes
-          </button>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => open()}
+              className="rounded-xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white hover:opacity-90"
+            >
+              Subir imagenes
+            </button>
+            <p className="text-xs text-neutral-500">
+              Tip: usa el texto alternativo para indicar el color de la foto, por
+              ejemplo &quot;Negro frente&quot; o &quot;Rosa detalle&quot;.
+            </p>
+          </div>
         )}
       </CldUploadWidget>
 
@@ -78,12 +85,28 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
               <div className="space-y-3 p-3">
                 <input
                   type="text"
-                  value={image.alt || ''}
-                  onChange={(e) => {
+                  value={image.color || ''}
+                  onChange={(event) => {
                     onChange(
                       value.map((item) =>
                         item.publicId === image.publicId
-                          ? { ...item, alt: e.target.value }
+                          ? { ...item, color: event.target.value }
+                          : item
+                      )
+                    )
+                  }}
+                  placeholder="Color asociado"
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+                />
+
+                <input
+                  type="text"
+                  value={image.alt || ''}
+                  onChange={(event) => {
+                    onChange(
+                      value.map((item) =>
+                        item.publicId === image.publicId
+                          ? { ...item, alt: event.target.value }
                           : item
                       )
                     )

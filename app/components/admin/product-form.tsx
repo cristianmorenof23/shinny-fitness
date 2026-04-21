@@ -6,6 +6,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Prisma } from '../../../generated/prisma/client'
 import { createProduct, updateProduct } from '@/app/actions/product'
+import { buildProductImageAlt, parseProductImageAlt } from '@/app/lib/product-images'
 import ImageUpload, { UploadedImage } from './image-upload'
 
 type Category = {
@@ -68,7 +69,8 @@ export default function ProductForm({
       ? product.images.map((image) => ({
           url: image.url,
           publicId: image.id,
-          alt: image.alt ?? '',
+          color: parseProductImageAlt(image.alt).color,
+          alt: parseProductImageAlt(image.alt).alt,
         }))
       : []
   )
@@ -128,7 +130,10 @@ export default function ProductForm({
         isActive,
         images: images.map((image) => ({
           url: image.url,
-          alt: image.alt || '',
+          alt: buildProductImageAlt({
+            color: image.color,
+            alt: image.alt,
+          }),
         })),
         variants: variants.map((variant) => ({
           color: variant.color,

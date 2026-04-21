@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Prisma } from '../../../generated/prisma/client'
+import AdminPagination from '@/app/components/admin/admin-pagination'
 import ProductsTable from '@/app/components/admin/products-table'
 import { requireAdmin } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/prisma'
@@ -32,6 +33,18 @@ type ProductsPageSearchParams = {
   q?: string
   categoria?: string
   estado?: string
+  page?: string
+}
+
+const PRODUCTS_PER_PAGE = 10
+
+function normalizePage(value?: string) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return 1
+  }
+
+  return Math.floor(parsed)
 }
 
 export default async function ProductosPage({
@@ -43,48 +56,52 @@ export default async function ProductosPage({
 
   const params = await searchParams
   const query = params.q?.trim()
+  const page = normalizePage(params.page)
 
   let products: AdminProduct[] | null = null
   let categories: { id: string; name: string; slug: string }[] = []
+  let totalProducts = 0
   let errorMessage: string | null = null
 
   try {
-    const [loadedProducts, loadedCategories] = await Promise.all([
+    const where: Prisma.ProductWhereInput = {
+      category: params.categoria
+        ? {
+            slug: params.categoria,
+          }
+        : undefined,
+      isActive:
+        params.estado === 'activos'
+          ? true
+          : params.estado === 'inactivos'
+            ? false
+            : undefined,
+      OR: query
+        ? [
+            {
+              name: {
+                contains: query,
+              },
+            },
+            {
+              slug: {
+                contains: query,
+              },
+            },
+            {
+              category: {
+                name: {
+                  contains: query,
+                },
+              },
+            },
+          ]
+        : undefined,
+    }
+
+    const [loadedProducts, loadedCategories, loadedTotal] = await prisma.$transaction([
       prisma.product.findMany({
-        where: {
-          category: params.categoria
-            ? {
-                slug: params.categoria,
-              }
-            : undefined,
-          isActive:
-            params.estado === 'activos'
-              ? true
-              : params.estado === 'inactivos'
-                ? false
-                : undefined,
-          OR: query
-            ? [
-                {
-                  name: {
-                    contains: query,
-                  },
-                },
-                {
-                  slug: {
-                    contains: query,
-                  },
-                },
-                {
-                  category: {
-                    name: {
-                      contains: query,
-                    },
-                  },
-                },
-              ]
-            : undefined,
-        },
+        where,
         include: {
           category: true,
           images: true,
@@ -93,6 +110,8 @@ export default async function ProductosPage({
         orderBy: {
           createdAt: 'desc',
         },
+        skip: (page - 1) * PRODUCTS_PER_PAGE,
+        take: PRODUCTS_PER_PAGE,
       }),
       prisma.category.findMany({
         orderBy: {
@@ -104,14 +123,20 @@ export default async function ProductosPage({
           slug: true,
         },
       }),
+      prisma.product.count({
+        where,
+      }),
     ])
 
     products = loadedProducts
     categories = loadedCategories
+    totalProducts = loadedTotal
   } catch (error) {
     console.error('Error loading admin products:', error)
     errorMessage = getDatabaseErrorMessage(error)
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalProducts / PRODUCTS_PER_PAGE))
 
   return (
     <div className="space-y-6">
@@ -203,7 +228,18 @@ export default async function ProductosPage({
           </div>
         </div>
       ) : (
-        <ProductsTable products={products ?? []} />
+        <>
+          <ProductsTable products={products ?? []} />
+          <AdminPagination
+            page={Math.min(page, totalPages)}
+            totalPages={totalPages}
+            totalItems={totalProducts}
+            pageSize={PRODUCTS_PER_PAGE}
+            basePath="/admin/productos"
+            searchParams={params}
+            itemLabel="productos"
+          />
+        </>
       )}
     </div>
   )

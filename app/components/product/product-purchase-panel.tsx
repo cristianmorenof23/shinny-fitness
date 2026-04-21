@@ -21,15 +21,42 @@ type ProductPurchasePanelProps = {
     image: string
   }
   variants: ProductVariantOption[]
+  onColorChange?: (color: string) => void
 }
 
 function uniqueValues(values: (string | null)[]) {
   return [...new Set(values.filter(Boolean))] as string[]
 }
 
+function getColorSwatchClass(color: string) {
+  const normalized = color.trim().toLowerCase()
+
+  if (normalized.includes('negro')) return 'bg-black'
+  if (normalized.includes('blanco')) return 'bg-white'
+  if (normalized.includes('gris')) return 'bg-zinc-400'
+  if (normalized.includes('rosa')) return 'bg-pink-400'
+  if (normalized.includes('fucsia')) return 'bg-fuchsia-500'
+  if (normalized.includes('rojo')) return 'bg-red-500'
+  if (normalized.includes('bordo')) return 'bg-rose-900'
+  if (normalized.includes('azul')) return 'bg-blue-500'
+  if (normalized.includes('celeste')) return 'bg-sky-400'
+  if (normalized.includes('verde')) return 'bg-emerald-500'
+  if (normalized.includes('lima')) return 'bg-lime-400'
+  if (normalized.includes('amarillo')) return 'bg-yellow-400'
+  if (normalized.includes('naranja')) return 'bg-orange-400'
+  if (normalized.includes('violeta')) return 'bg-violet-500'
+  if (normalized.includes('lila')) return 'bg-purple-300'
+  if (normalized.includes('beige')) return 'bg-stone-300'
+  if (normalized.includes('crema')) return 'bg-amber-100'
+  if (normalized.includes('marron') || normalized.includes('camel')) return 'bg-amber-700'
+
+  return 'bg-[#8B5E3C]'
+}
+
 export function ProductPurchasePanel({
   product,
   variants,
+  onColorChange,
 }: ProductPurchasePanelProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [selectedColor, setSelectedColor] = useState('')
@@ -97,13 +124,21 @@ export function ProductPurchasePanel({
                   onClick={() => {
                     setSelectedColor(color)
                     setSelectedSize('')
+                    onColorChange?.(color)
                   }}
-                  className={`rounded-full border px-4 py-2 text-sm transition ${
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
                     isSelected
                       ? 'border-[#4A3728] bg-[#4A3728] text-white'
                       : 'border-[#dccbbc] bg-white text-[#4A3728] hover:bg-[#f8efe7]'
                   }`}
                 >
+                  <span
+                    className={`h-3.5 w-3.5 rounded-full border border-black/10 ${getColorSwatchClass(color)} ${
+                      color.trim().toLowerCase().includes('blanco')
+                        ? 'shadow-[inset_0_0_0_1px_rgba(45,36,30,0.12)]'
+                        : ''
+                    }`}
+                  />
                   {color}
                 </button>
               )

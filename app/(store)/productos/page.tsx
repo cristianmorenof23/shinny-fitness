@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { AddToCartButton } from '@/app/components/product/add-to-cart-button'
+import { ProductCardPurchase } from '@/app/components/product/product-card-purchase'
 import { StorefrontFilters } from '@/app/components/product/storefront-filters'
 import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import {
@@ -22,16 +22,6 @@ type ProductsPageParams = {
   categoria?: string
   color?: string
   talle?: string
-}
-
-function getBuyableVariantsCount(
-  variants: {
-    stock: number
-    size: string | null
-    color: string | null
-  }[]
-) {
-  return variants.filter((variant) => variant.stock > 0).length
 }
 
 export default async function ProductosPage({
@@ -117,12 +107,22 @@ export default async function ProductosPage({
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {products.map((product) => {
                   const imageUrl = product.images[0]?.url || '/placeholder-product.jpg'
-                  const firstVariant = product.variants[0]
-                  const hasStock =
-                    product.variants.length === 0 ||
-                    product.variants.some((variant) => variant.stock > 0)
-                  const buyableVariantsCount = getBuyableVariantsCount(product.variants)
-                  const needsVariantSelection = buyableVariantsCount > 1
+                  const colors = [
+                    ...new Set(
+                      product.variants
+                        .filter((variant) => variant.stock > 0)
+                        .map((variant) => variant.color)
+                        .filter(Boolean)
+                    ),
+                  ]
+                  const sizes = [
+                    ...new Set(
+                      product.variants
+                        .filter((variant) => variant.stock > 0)
+                        .map((variant) => variant.size)
+                        .filter(Boolean)
+                    ),
+                  ]
 
                   return (
                     <article
@@ -137,6 +137,19 @@ export default async function ProductosPage({
                             fill
                             className="object-cover transition duration-300 group-hover:scale-[1.03]"
                           />
+
+                          <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-2">
+                            {colors.length > 1 ? (
+                              <span className="rounded-full bg-white/92 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#4A3728] shadow-sm">
+                                {colors.length} colores
+                              </span>
+                            ) : null}
+                            {sizes.length > 1 ? (
+                              <span className="rounded-full bg-[#2D241E]/88 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white shadow-sm">
+                                {sizes.length} talles
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                       </Link>
 
@@ -157,18 +170,6 @@ export default async function ProductosPage({
                           </p>
                         ) : null}
 
-                        {firstVariant ? (
-                          <p className="text-xs text-[#7A6A5F]">
-                            {firstVariant.color
-                              ? `Color: ${firstVariant.color}`
-                              : 'Color unico'}
-                            {' - '}
-                            {firstVariant.size
-                              ? `Talle: ${firstVariant.size}`
-                              : 'Talle unico'}
-                          </p>
-                        ) : null}
-
                         <div className="space-y-1">
                           <p className="text-lg font-bold text-[#4A3728]">
                             {formatArs(product.price)}
@@ -181,29 +182,21 @@ export default async function ProductosPage({
                           </p>
                         </div>
 
-                        {needsVariantSelection ? (
-                          <Link
-                            href={`/productos/${product.slug}`}
-                            className="flex w-full items-center justify-center rounded-full bg-[#4A3728] px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-90"
-                          >
-                            Elegir opciones
-                          </Link>
-                        ) : (
-                          <AddToCartButton
-                            product={{
-                              id: product.id,
-                              name: product.name,
-                              slug: product.slug,
-                              price: Number(product.price),
-                              image: imageUrl,
-                              selectedSize: firstVariant?.size ?? 'Unico',
-                              selectedColor: firstVariant?.color ?? 'Unico',
-                            }}
-                            disabled={!hasStock}
-                            className="flex w-full items-center justify-center rounded-full bg-[#4A3728] px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[#c8b6a6]"
-                            label={hasStock ? 'Agregar al carrito' : 'Sin stock'}
-                          />
-                        )}
+                        <ProductCardPurchase
+                          product={{
+                            id: product.id,
+                            name: product.name,
+                            slug: product.slug,
+                            price: Number(product.price),
+                            image: imageUrl,
+                          }}
+                          variants={product.variants.map((variant) => ({
+                            id: variant.id,
+                            color: variant.color,
+                            size: variant.size,
+                            stock: variant.stock,
+                          }))}
+                        />
                       </div>
                     </article>
                   )
