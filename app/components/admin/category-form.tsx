@@ -3,10 +3,17 @@
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { createCategory } from '@/app/actions/crear-categoria'
+import {
+  createCategory,
+  updateCategory,
+} from '@/app/actions/crear-categoria'
+import SingleImageUpload, {
+  UploadedSingleImage,
+} from '@/app/components/admin/single-image-upload'
 
 type CategoryFormProps = {
   defaultValues?: {
+    id?: string
     name?: string
     slug?: string
     description?: string | null
@@ -20,9 +27,18 @@ export default function CategoryForm({ defaultValues }: CategoryFormProps) {
   const [name, setName] = useState(defaultValues?.name ?? '')
   const [slug, setSlug] = useState(defaultValues?.slug ?? '')
   const [description, setDescription] = useState(defaultValues?.description ?? '')
-  const [imageUrl, setImageUrl] = useState(defaultValues?.imageUrl ?? '')
+  const [image, setImage] = useState<UploadedSingleImage | null>(
+    defaultValues?.imageUrl
+      ? {
+          url: defaultValues.imageUrl,
+          publicId: defaultValues.imageUrl,
+          alt: defaultValues.name ?? '',
+        }
+      : null
+  )
   const [isActive, setIsActive] = useState(defaultValues?.isActive ?? true)
   const [isPending, startTransition] = useTransition()
+  const isEditing = Boolean(defaultValues?.id)
 
   function handleAutoSlug(value: string) {
     const generatedSlug = value
@@ -41,25 +57,42 @@ export default function CategoryForm({ defaultValues }: CategoryFormProps) {
     event.preventDefault()
 
     startTransition(async () => {
-      const result = await createCategory({
+      const payload = {
         name,
         slug,
         description,
-        imageUrl,
+        imageUrl: image?.url ?? '',
         isActive,
-      })
+      }
+
+      const result =
+        isEditing && defaultValues?.id
+          ? await updateCategory(defaultValues.id, payload)
+          : await createCategory(payload)
 
       if (result?.ok === false) {
-        toast.error('No pudimos crear la categoria. Revisa los datos e intenta otra vez.')
+        toast.error(
+          isEditing
+            ? 'No pudimos actualizar la categoria. Revisa los datos e intenta otra vez.'
+            : 'No pudimos crear la categoria. Revisa los datos e intenta otra vez.'
+        )
         return
       }
 
-      toast.success('Categoria creada correctamente.')
-      setName('')
-      setSlug('')
-      setDescription('')
-      setImageUrl('')
-      setIsActive(true)
+      toast.success(
+        isEditing ? 'Categoria actualizada correctamente.' : 'Categoria creada correctamente.'
+      )
+
+      if (isEditing) {
+        router.push(result?.redirectTo ?? '/admin/categorias')
+      } else {
+        setName('')
+        setSlug('')
+        setDescription('')
+        setImage(null)
+        setIsActive(true)
+      }
+
       router.refresh()
     })
   }
@@ -83,7 +116,9 @@ export default function CategoryForm({ defaultValues }: CategoryFormProps) {
             value={name}
             onChange={(event) => {
               setName(event.target.value)
-              handleAutoSlug(event.target.value)
+              if (!isEditing) {
+                handleAutoSlug(event.target.value)
+              }
             }}
             placeholder="Ej: Calzas"
             className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-900"
@@ -91,7 +126,7 @@ export default function CategoryForm({ defaultValues }: CategoryFormProps) {
           />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label
             htmlFor="slug"
             className="mb-2 block text-sm font-medium text-neutral-700"
@@ -109,20 +144,15 @@ export default function CategoryForm({ defaultValues }: CategoryFormProps) {
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="imageUrl"
-            className="mb-2 block text-sm font-medium text-neutral-700"
-          >
-            URL de imagen
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-neutral-700">
+            Imagen de la categoria
           </label>
-          <input
-            id="imageUrl"
-            type="text"
-            value={imageUrl}
-            onChange={(event) => setImageUrl(event.target.value)}
-            placeholder="https://..."
-            className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-900"
+          <SingleImageUpload
+            value={image}
+            onChange={setImage}
+            folder="shiny-fitness/categories"
+            buttonLabel="Subir imagen de categoria"
           />
         </div>
 
@@ -159,7 +189,11 @@ export default function CategoryForm({ defaultValues }: CategoryFormProps) {
         disabled={isPending}
         className="inline-flex rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
       >
-        {isPending ? 'Guardando...' : 'Crear categoria'}
+        {isPending
+          ? 'Guardando...'
+          : isEditing
+            ? 'Guardar cambios'
+            : 'Crear categoria'}
       </button>
     </form>
   )

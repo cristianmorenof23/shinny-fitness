@@ -10,6 +10,12 @@ import {
   getPostLoginRedirect,
   getSafeRedirect,
 } from '@/app/lib/auth'
+import {
+  getDatabaseCapacityMessage,
+  getDatabaseSchemaMessage,
+  isDatabaseCapacityError,
+  isDatabaseSchemaError,
+} from '@/app/lib/database-errors'
 import { loginSchema, registerSchema } from '@/app/validations/login.schema'
 
 export type AuthActionState = {
@@ -43,8 +49,11 @@ export async function loginUserAction(
   } catch (error) {
     console.error('Error loading user for login:', error)
     return {
-      formError:
-        'No pudimos conectar con la base de datos para iniciar sesion. Revisa el acceso remoto de MySQL y las migraciones pendientes.',
+      formError: isDatabaseCapacityError(error)
+        ? getDatabaseCapacityMessage('iniciar sesion')
+        : isDatabaseSchemaError(error)
+          ? getDatabaseSchemaMessage('iniciar sesion')
+          : 'No pudimos conectar con la base de datos para iniciar sesion. Revisa el acceso remoto de MySQL y vuelve a intentar.',
     }
   }
 
@@ -72,7 +81,12 @@ export async function loginUserAction(
   }
 
   try {
-    await createAuthSession(user.id)
+    await createAuthSession({
+      id: user.id,
+      name: user.name ?? null,
+      email: user.email,
+      role: user.role,
+    })
   } catch (error) {
     console.error('Error creating auth session:', error)
     return {
@@ -112,8 +126,11 @@ export async function registerUserAction(
   } catch (error) {
     console.error('Error checking existing user:', error)
     return {
-      formError:
-        'No pudimos conectar con la base de datos para crear tu cuenta. Revisa el acceso remoto de MySQL y las migraciones pendientes.',
+      formError: isDatabaseCapacityError(error)
+        ? getDatabaseCapacityMessage('crear tu cuenta')
+        : isDatabaseSchemaError(error)
+          ? getDatabaseSchemaMessage('crear tu cuenta')
+          : 'No pudimos conectar con la base de datos para crear tu cuenta. Revisa el acceso remoto de MySQL y vuelve a intentar.',
     }
   }
 
@@ -137,19 +154,29 @@ export async function registerUserAction(
       },
       select: {
         id: true,
+        name: true,
+        email: true,
         role: true,
       },
     })
   } catch (error) {
     console.error('Error creating user:', error)
     return {
-      formError:
-        'No pudimos crear tu cuenta. Si agregaste el rol CUSTOMER al schema, falta aplicar la migracion en la base.',
+      formError: isDatabaseCapacityError(error)
+        ? getDatabaseCapacityMessage('crear tu cuenta')
+        : isDatabaseSchemaError(error)
+          ? getDatabaseSchemaMessage('crear tu cuenta')
+          : 'No pudimos crear tu cuenta en este momento. Intenta nuevamente en unos minutos.',
     }
   }
 
   try {
-    await createAuthSession(user.id)
+    await createAuthSession({
+      id: user.id,
+      name: user.name ?? null,
+      email: user.email,
+      role: user.role,
+    })
   } catch (error) {
     console.error('Error creating auth session after register:', error)
     return {

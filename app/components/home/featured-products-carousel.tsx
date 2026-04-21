@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Navigation } from 'swiper/modules'
 import { AddToCartButton } from '@/app/components/product/add-to-cart-button'
+import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 
 import 'swiper/css'
 import 'swiper/css/navigation'
@@ -28,12 +29,12 @@ type FeaturedProduct = {
   }[]
 }
 
-function formatPrice(value: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(value)
+function getBuyableVariantsCount(
+  variants: {
+    stock: number
+  }[]
+) {
+  return variants.filter((variant) => variant.stock > 0).length
 }
 
 export function FeaturedProductsCarousel({
@@ -50,7 +51,7 @@ export function FeaturedProductsCarousel({
               Seleccion Shiny
             </span>
             <h2 className="text-4xl font-bold tracking-tight text-[#2D241E] sm:text-5xl">
-              Nuestros <span className="italic font-serif">Favoritos</span>
+              Nuestros <span className="font-serif italic">Favoritos</span>
             </h2>
           </div>
 
@@ -83,6 +84,7 @@ export function FeaturedProductsCarousel({
             const hasStock =
               product.variants.length === 0 ||
               product.variants.some((variant) => variant.stock > 0)
+            const needsVariantSelection = getBuyableVariantsCount(product.variants) > 1
 
             return (
               <SwiperSlide key={product.id}>
@@ -118,32 +120,41 @@ export function FeaturedProductsCarousel({
 
                       <div className="mt-2 flex items-baseline gap-2">
                         <span className="text-xl font-bold text-[#4A3728]">
-                          {formatPrice(Number(product.price))}
+                          {formatArs(product.price)}
                         </span>
                       </div>
 
                       <p className="mt-1 text-xs text-[#8B5E3C]">
                         o 3 pagos de{' '}
                         <span className="font-bold">
-                          {formatPrice(Number(product.price) / 3)}
+                          {formatArs(getInstallmentPrice(product.price))}
                         </span>
                       </p>
                     </div>
 
-                    <AddToCartButton
-                      product={{
-                        id: product.id,
-                        name: product.name,
-                        slug: product.slug,
-                        price: Number(product.price),
-                        image,
-                        selectedSize: firstVariant?.size ?? 'Unico',
-                        selectedColor: firstVariant?.color ?? 'Unico',
-                      }}
-                      className="flex w-full items-center justify-center rounded-2xl bg-[#F5F0EB] py-4 text-xs font-bold uppercase tracking-widest text-[#4A3728] transition-all hover:bg-[#4A3728] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={!hasStock}
-                      label={hasStock ? 'Anadir al carrito' : 'Sin stock'}
-                    />
+                    {needsVariantSelection ? (
+                      <Link
+                        href={`/productos/${product.slug}`}
+                        className="flex w-full items-center justify-center rounded-2xl bg-[#F5F0EB] py-4 text-xs font-bold uppercase tracking-widest text-[#4A3728] transition-all hover:bg-[#4A3728] hover:text-white"
+                      >
+                        Elegir opciones
+                      </Link>
+                    ) : (
+                      <AddToCartButton
+                        product={{
+                          id: product.id,
+                          name: product.name,
+                          slug: product.slug,
+                          price: Number(product.price),
+                          image,
+                          selectedSize: firstVariant?.size ?? 'Unico',
+                          selectedColor: firstVariant?.color ?? 'Unico',
+                        }}
+                        className="flex w-full items-center justify-center rounded-2xl bg-[#F5F0EB] py-4 text-xs font-bold uppercase tracking-widest text-[#4A3728] transition-all hover:bg-[#4A3728] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={!hasStock}
+                        label={hasStock ? 'Anadir al carrito' : 'Sin stock'}
+                      />
+                    )}
                   </div>
                 </article>
               </SwiperSlide>

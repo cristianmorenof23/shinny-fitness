@@ -4,6 +4,7 @@ export const siteConfig = {
   name: 'Shiny Fitness',
   shortName: 'Shiny',
   url: 'https://shiny-fitness.com',
+  icon: '/Shiny%20Fitness%20logo%20on%20transparent%20background.png',
   titleTemplate: '%s | Shiny Fitness',
   description:
     'Shiny Fitness es una tienda online de ropa deportiva femenina con prendas premium, looks versatiles y una experiencia de compra cercana.',
@@ -148,6 +149,21 @@ export const rootMetadata: Metadata = {
   category: 'fashion',
   alternates: {
     canonical: '/',
+  },
+  icons: {
+    icon: [
+      {
+        url: siteConfig.icon,
+        type: 'image/png',
+      },
+    ],
+    shortcut: [siteConfig.icon],
+    apple: [
+      {
+        url: siteConfig.icon,
+        type: 'image/png',
+      },
+    ],
   },
   openGraph: {
     type: 'website',

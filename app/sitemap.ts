@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
-import { prisma } from './lib/prisma'
 import { absoluteUrl } from './lib/seo'
+import { getStorefrontCatalogSnapshot } from './lib/storefront'
 
 const staticRoutes = [
   {
@@ -25,22 +25,7 @@ const staticRoutes = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const [products, categories] = await Promise.all([
-      prisma.product.findMany({
-        where: { isActive: true },
-        select: {
-          slug: true,
-          updatedAt: true,
-        },
-      }),
-      prisma.category.findMany({
-        where: { isActive: true },
-        select: {
-          slug: true,
-          updatedAt: true,
-        },
-      }),
-    ])
+    const { products, categories } = await getStorefrontCatalogSnapshot()
 
     return [
       ...staticRoutes,

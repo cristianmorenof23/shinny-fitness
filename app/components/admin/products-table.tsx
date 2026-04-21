@@ -33,6 +33,17 @@ function getTotalStock(
     .reduce((acc, variant) => acc + variant.stock, 0)
 }
 
+function formatVariantLabel(variant: {
+  color: string | null
+  size: string | null
+  stock: number
+  isActive: boolean
+}) {
+  const parts = [variant.color, variant.size].filter(Boolean)
+  const label = parts.length > 0 ? parts.join(' - ') : 'Unica'
+  return `${label}: ${variant.stock}`
+}
+
 export default function ProductsTable({ products }: ProductsTableProps) {
   if (products.length === 0) {
     return (
@@ -41,7 +52,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
           No hay productos cargados
         </h3>
         <p className="mt-2 text-sm text-neutral-500">
-          Cuando agregues productos, los vas a ver acá.
+          Cuando agregues productos, los vas a ver aca.
         </p>
 
         <Link
@@ -61,9 +72,10 @@ export default function ProductsTable({ products }: ProductsTableProps) {
           <thead className="bg-neutral-50 text-neutral-600">
             <tr className="border-b border-neutral-200">
               <th className="px-4 py-4 font-semibold">Producto</th>
-              <th className="px-4 py-4 font-semibold">Categoría</th>
+              <th className="px-4 py-4 font-semibold">Categoria</th>
               <th className="px-4 py-4 font-semibold">Precio</th>
               <th className="px-4 py-4 font-semibold">Stock</th>
+              <th className="px-4 py-4 font-semibold">Variantes</th>
               <th className="px-4 py-4 font-semibold">Estado</th>
               <th className="px-4 py-4 font-semibold">Destacado</th>
               <th className="px-4 py-4 font-semibold">Acciones</th>
@@ -74,6 +86,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
             {products.map((product) => {
               const mainImage = product.images[0]?.url || '/placeholder-product.jpg'
               const totalStock = getTotalStock(product.variants)
+              const activeVariants = product.variants.filter((variant) => variant.isActive)
 
               return (
                 <tr
@@ -134,6 +147,28 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                   </td>
 
                   <td className="px-4 py-4">
+                    {activeVariants.length === 0 ? (
+                      <span className="text-xs text-neutral-500">Producto unico</span>
+                    ) : (
+                      <div className="flex max-w-[250px] flex-wrap gap-2">
+                        {activeVariants.slice(0, 4).map((variant) => (
+                          <span
+                            key={variant.id}
+                            className="inline-flex rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700"
+                          >
+                            {formatVariantLabel(variant)}
+                          </span>
+                        ))}
+                        {activeVariants.length > 4 ? (
+                          <span className="inline-flex rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700">
+                            +{activeVariants.length - 4} mas
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-4">
                     <span
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
                         product.isActive
@@ -153,7 +188,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                           : 'bg-neutral-200 text-neutral-600'
                       }`}
                     >
-                      {product.isFeatured ? 'Sí' : 'No'}
+                      {product.isFeatured ? 'Si' : 'No'}
                     </span>
                   </td>
 

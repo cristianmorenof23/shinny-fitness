@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { Mail, MessageCircle } from 'lucide-react'
+import { buildWhatsAppUrl } from '@/app/lib/contact'
 
 type AdminOrder = {
   id: string
@@ -145,12 +147,32 @@ export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
                   </td>
 
                   <td className="px-4 py-4">
-                    <Link
-                      href={`/admin/pedidos/${order.id}`}
-                      className="inline-flex rounded-lg border border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
-                    >
-                      Ver detalle
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/admin/pedidos/${order.id}`}
+                        className="inline-flex rounded-lg border border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
+                      >
+                        Ver detalle
+                      </Link>
+                      <a
+                        href={buildWhatsAppUrl(
+                          `Hola ${order.customerName}, te escribimos desde Shiny Fitness por tu pedido #${order.id.slice(-8).toUpperCase()}.`
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        WhatsApp
+                      </a>
+                      <a
+                        href={`mailto:${order.customerEmail}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        Email
+                      </a>
+                    </div>
                   </td>
                 </tr>
               )

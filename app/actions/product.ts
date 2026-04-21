@@ -1,11 +1,23 @@
 'use server'
 
-import { prisma } from '@/app/lib/prisma'
-import { requireAdmin } from '@/app/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { requireAdmin } from '@/app/lib/auth'
+import { prisma } from '@/app/lib/prisma'
 
-const createProductSchema = z.object({
+const productVariantSchema = z
+  .object({
+    color: z.string().trim().optional(),
+    size: z.string().trim().optional(),
+    stock: z.coerce.number().int().min(0),
+    sku: z.string().trim().optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((value) => Boolean(value.color || value.size), {
+    message: 'Cada variante debe tener al menos color o talle.',
+  })
+
+const baseProductSchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
   description: z.string().min(5),
@@ -26,9 +38,10 @@ const createProductSchema = z.object({
       })
     )
     .optional(),
+  variants: z.array(productVariantSchema).optional(),
 })
 
-export async function createProduct(data: {
+type ProductInput = {
   name: string
   slug: string
   description: string
@@ -43,14 +56,79 @@ export async function createProduct(data: {
     url: string
     alt?: string
   }[]
-}) {
-  await requireAdmin()
+  variants?: {
+    color?: string
+    size?: string
+    stock: string | number
+    sku?: string
+    isActive?: boolean
+  }[]
+}
 
-  const parsed = createProductSchema.safeParse({
+function parseProduct(data: ProductInput) {
+  return baseProductSchema.safeParse({
     ...data,
     compareAtPrice: data.compareAtPrice ? data.compareAtPrice : undefined,
     images: data.images ?? [],
+    variants: (data.variants ?? []).filter(
+      (variant) =>
+        variant.color?.trim() ||
+        variant.size?.trim() ||
+        Number(variant.stock) > 0 ||
+        variant.sku?.trim()
+    ),
   })
+}
+
+function mapProductData(
+  parsed: z.infer<typeof baseProductSchema>
+): Parameters<typeof prisma.product.create>[0]['data'] {
+  return {
+    name: parsed.name,
+    slug: parsed.slug,
+    description: parsed.description,
+    shortDescription: parsed.shortDescription || null,
+    price: parsed.price,
+    compareAtPrice:
+      parsed.compareAtPrice === '' || parsed.compareAtPrice == null
+        ? null
+        : Number(parsed.compareAtPrice),
+    categoryId: parsed.categoryId,
+    isFeatured: parsed.isFeatured,
+    isNew: parsed.isNew,
+    isActive: parsed.isActive,
+    images: {
+      create: (parsed.images ?? []).map((image) => ({
+        url: image.url,
+        alt: image.alt || null,
+      })),
+    },
+    variants: {
+      create: (parsed.variants ?? []).map((variant) => ({
+        color: variant.color || null,
+        size: variant.size || null,
+        stock: variant.stock,
+        sku: variant.sku || null,
+        isActive: variant.isActive ?? true,
+      })),
+    },
+  }
+}
+
+function revalidateProductPaths(slug?: string) {
+  revalidatePath('/admin/productos')
+  revalidatePath('/admin')
+  revalidatePath('/productos')
+  revalidatePath('/')
+  if (slug) {
+    revalidatePath(`/productos/${slug}`)
+  }
+}
+
+export async function createProduct(data: ProductInput) {
+  await requireAdmin()
+
+  const parsed = parseProduct(data)
 
   if (!parsed.success) {
     return {
@@ -73,31 +151,91 @@ export async function createProduct(data: {
   }
 
   await prisma.product.create({
-    data: {
-      name: parsed.data.name,
+    data: mapProductData(parsed.data),
+  })
+
+  revalidateProductPaths(parsed.data.slug)
+
+  return {
+    ok: true,
+    redirectTo: '/admin/productos',
+  }
+}
+
+export async function updateProduct(productId: string, data: ProductInput) {
+  await requireAdmin()
+
+  const parsed = parseProduct(data)
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      errors: parsed.error.flatten().fieldErrors,
+    }
+  }
+
+  const existingSlug = await prisma.product.findFirst({
+    where: {
       slug: parsed.data.slug,
-      description: parsed.data.description,
-      shortDescription: parsed.data.shortDescription || null,
-      price: parsed.data.price,
-      compareAtPrice:
-        parsed.data.compareAtPrice === '' || parsed.data.compareAtPrice == null
-          ? null
-          : Number(parsed.data.compareAtPrice),
-      categoryId: parsed.data.categoryId,
-      isFeatured: parsed.data.isFeatured,
-      isNew: parsed.data.isNew,
-      isActive: parsed.data.isActive,
+      id: {
+        not: productId,
+      },
+    },
+  })
+
+  if (existingSlug) {
+    return {
+      ok: false,
+      errors: {
+        slug: ['Ya existe un producto con ese slug'],
+      },
+    }
+  }
+
+  const current = await prisma.product.findUnique({
+    where: { id: productId },
+    select: {
+      slug: true,
+    },
+  })
+
+  if (!current) {
+    return {
+      ok: false,
+      errors: {
+        name: ['No encontramos el producto a editar.'],
+      },
+    }
+  }
+
+  await prisma.product.update({
+    where: {
+      id: productId,
+    },
+    data: {
+      ...mapProductData(parsed.data),
       images: {
+        deleteMany: {},
         create: (parsed.data.images ?? []).map((image) => ({
           url: image.url,
           alt: image.alt || null,
         })),
       },
+      variants: {
+        deleteMany: {},
+        create: (parsed.data.variants ?? []).map((variant) => ({
+          color: variant.color || null,
+          size: variant.size || null,
+          stock: variant.stock,
+          sku: variant.sku || null,
+          isActive: variant.isActive ?? true,
+        })),
+      },
     },
   })
 
-  revalidatePath('/admin/productos')
-  revalidatePath('/productos')
+  revalidateProductPaths(current.slug)
+  revalidateProductPaths(parsed.data.slug)
 
   return {
     ok: true,

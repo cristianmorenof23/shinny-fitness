@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Prisma } from '../../../generated/prisma/client'
-import { createProduct } from '@/app/actions/product'
+import { createProduct, updateProduct } from '@/app/actions/product'
 import ImageUpload, { UploadedImage } from './image-upload'
 
 type Category = {
@@ -19,9 +20,28 @@ type ProductWithRelations = Prisma.ProductGetPayload<{
   }
 }>
 
+type EditableVariant = {
+  id?: string
+  color: string
+  size: string
+  stock: string
+  sku: string
+  isActive: boolean
+}
+
 interface ProductFormProps {
   categories: Category[]
   product?: ProductWithRelations
+}
+
+function createEmptyVariant(): EditableVariant {
+  return {
+    color: '',
+    size: '',
+    stock: '0',
+    sku: '',
+    isActive: true,
+  }
 }
 
 export default function ProductForm({
@@ -52,6 +72,18 @@ export default function ProductForm({
         }))
       : []
   )
+  const [variants, setVariants] = useState<EditableVariant[]>(
+    product?.variants?.length
+      ? product.variants.map((variant) => ({
+          id: variant.id,
+          color: variant.color ?? '',
+          size: variant.size ?? '',
+          stock: variant.stock.toString(),
+          sku: variant.sku ?? '',
+          isActive: variant.isActive,
+        }))
+      : []
+  )
   const [isPending, startTransition] = useTransition()
 
   function handleAutoSlug(value: string) {
@@ -67,11 +99,23 @@ export default function ProductForm({
     setSlug(generatedSlug)
   }
 
+  function updateVariant(
+    index: number,
+    field: keyof EditableVariant,
+    value: string | boolean
+  ) {
+    setVariants((current) =>
+      current.map((variant, currentIndex) =>
+        currentIndex === index ? { ...variant, [field]: value } : variant
+      )
+    )
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     startTransition(async () => {
-      const result = await createProduct({
+      const payload = {
         name,
         slug,
         description,
@@ -86,7 +130,18 @@ export default function ProductForm({
           url: image.url,
           alt: image.alt || '',
         })),
-      })
+        variants: variants.map((variant) => ({
+          color: variant.color,
+          size: variant.size,
+          stock: variant.stock,
+          sku: variant.sku,
+          isActive: variant.isActive,
+        })),
+      }
+
+      const result = product
+        ? await updateProduct(product.id, payload)
+        : await createProduct(payload)
 
       if (result?.ok === false) {
         toast.error('No pudimos guardar el producto. Revisa los campos e intenta otra vez.')
@@ -283,6 +338,126 @@ export default function ProductForm({
         </div>
 
         <ImageUpload value={images} onChange={setImages} />
+      </div>
+
+      <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-neutral-900">Variantes</h3>
+            <p className="mt-1 text-sm text-neutral-500">
+              Carga color, talle y stock por combinacion.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setVariants((current) => [...current, createEmptyVariant()])}
+            className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100"
+          >
+            <Plus className="h-4 w-4" />
+            Agregar variante
+          </button>
+        </div>
+
+        {variants.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-4 text-sm text-neutral-500">
+            Sin variantes cargadas. Si lo dejas asi, el producto se tratara como unico.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {variants.map((variant, index) => (
+              <div
+                key={variant.id ?? `${index}-${variant.color}-${variant.size}`}
+                className="grid gap-4 rounded-2xl border border-neutral-200 bg-white p-4 md:grid-cols-5"
+              >
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    Color
+                  </label>
+                  <input
+                    type="text"
+                    value={variant.color}
+                    onChange={(event) =>
+                      updateVariant(index, 'color', event.target.value)
+                    }
+                    placeholder="Negro"
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-neutral-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    Talle
+                  </label>
+                  <input
+                    type="text"
+                    value={variant.size}
+                    onChange={(event) =>
+                      updateVariant(index, 'size', event.target.value)
+                    }
+                    placeholder="S"
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-neutral-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={variant.stock}
+                    onChange={(event) =>
+                      updateVariant(index, 'stock', event.target.value)
+                    }
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-neutral-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    value={variant.sku}
+                    onChange={(event) =>
+                      updateVariant(index, 'sku', event.target.value)
+                    }
+                    placeholder="SKU-001"
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-neutral-900"
+                  />
+                </div>
+
+                <div className="flex items-end gap-3">
+                  <label className="flex flex-1 items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-sm text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={variant.isActive}
+                      onChange={(event) =>
+                        updateVariant(index, 'isActive', event.target.checked)
+                      }
+                    />
+                    Activa
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVariants((current) =>
+                        current.filter((_, currentIndex) => currentIndex !== index)
+                      )
+                    }
+                    className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 transition hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">

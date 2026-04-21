@@ -3,7 +3,6 @@ import 'server-only'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { prisma } from '@/app/lib/prisma'
 
 const SESSION_COOKIE_NAME = 'shiny_session'
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30
@@ -20,30 +19,50 @@ const SESSION_SECRET = (() => {
   return secret
 })()
 
+type SessionUserPayload = {
+  id: string
+  name: string | null
+  email: string
+  role: 'ADMIN' | 'CUSTOMER'
+}
+
 function signSessionPayload(payload: string) {
   return createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url')
 }
 
-function getSessionCookieValue(userId: string, expiresAt: Date) {
-  const payload = `${userId}.${expiresAt.getTime()}`
-  return `${payload}.${signSessionPayload(payload)}`
+function encodeSessionPayload(user: SessionUserPayload, expiresAt: Date) {
+  return Buffer.from(
+    JSON.stringify({
+      user,
+      expiresAt: expiresAt.getTime(),
+    })
+  ).toString('base64url')
+}
+
+function decodeSessionPayload(value: string) {
+  try {
+    return JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as {
+      user: SessionUserPayload
+      expiresAt: number
+    }
+  } catch {
+    return null
+  }
+}
+
+function getSessionCookieValue(user: SessionUserPayload, expiresAt: Date) {
+  const encodedPayload = encodeSessionPayload(user, expiresAt)
+  return `${encodedPayload}.${signSessionPayload(encodedPayload)}`
 }
 
 function parseSessionCookie(token: string) {
-  const [userId, expiresAtRaw, signature] = token.split('.')
+  const [encodedPayload, signature] = token.split('.')
 
-  if (!userId || !expiresAtRaw || !signature) {
+  if (!encodedPayload || !signature) {
     return null
   }
 
-  const expiresAtMs = Number(expiresAtRaw)
-
-  if (!Number.isFinite(expiresAtMs)) {
-    return null
-  }
-
-  const payload = `${userId}.${expiresAtRaw}`
-  const expectedSignature = signSessionPayload(payload)
+  const expectedSignature = signSessionPayload(encodedPayload)
 
   try {
     const signaturesMatch = timingSafeEqual(
@@ -58,13 +77,19 @@ function parseSessionCookie(token: string) {
     return null
   }
 
-  const expiresAt = new Date(expiresAtMs)
+  const parsed = decodeSessionPayload(encodedPayload)
+
+  if (!parsed) {
+    return null
+  }
+
+  const expiresAt = new Date(parsed.expiresAt)
 
   if (expiresAt <= new Date()) {
     return null
   }
 
-  return { userId, expiresAt }
+  return { user: parsed.user, expiresAt }
 }
 
 function sanitizeRedirectPath(
@@ -101,24 +126,10 @@ export async function getAuthSession() {
       return null
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: parsedSession.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-    })
-
-    if (!user) {
-      return null
-    }
-
     return {
       id: token,
       expiresAt: parsedSession.expiresAt,
-      user,
+      user: parsedSession.user,
     }
   } catch (error) {
     console.error('Error reading auth session:', error)
@@ -146,11 +157,11 @@ export async function requireAdmin(redirectTo = '/login?next=/admin') {
   return session
 }
 
-export async function createAuthSession(userId: string) {
+export async function createAuthSession(user: SessionUserPayload) {
   const expiresAt = getSessionExpiryDate()
 
   const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE_NAME, getSessionCookieValue(userId, expiresAt), {
+  cookieStore.set(SESSION_COOKIE_NAME, getSessionCookieValue(user, expiresAt), {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

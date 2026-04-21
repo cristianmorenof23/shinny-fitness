@@ -1,7 +1,14 @@
+import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/app/lib/prisma'
+import {
+  getDatabaseCapacityMessage,
+  isDatabaseCapacityError,
+} from '@/app/lib/database-errors'
 import { getMercadoPagoPreferenceClient } from '@/app/lib/mercadopago'
+import { siteConfig } from '@/app/lib/seo'
+import { getStorefrontProductsByIds } from '@/app/lib/storefront'
 
 const checkoutSchema = z.object({
   customer: z.object({
@@ -24,25 +31,21 @@ const checkoutSchema = z.object({
     .min(1),
 })
 
+function normalizeVariantValue(value?: string) {
+  return value && value !== 'Unico' ? value : null
+}
+
+function resolveReturnOrigin(origin: string) {
+  return origin.includes('localhost') || origin.includes('127.0.0.1')
+    ? siteConfig.url
+    : origin
+}
+
 export async function POST(request: Request) {
   try {
     const body = checkoutSchema.parse(await request.json())
     const productIds = body.items.map((item) => item.productId)
-    const products = await prisma.product.findMany({
-      where: {
-        id: {
-          in: productIds,
-        },
-        isActive: true,
-      },
-      include: {
-        variants: {
-          where: {
-            isActive: true,
-          },
-        },
-      },
-    })
+    const products = await getStorefrontProductsByIds(productIds)
 
     if (products.length !== productIds.length) {
       return NextResponse.json(
@@ -52,10 +55,57 @@ export async function POST(request: Request) {
     }
 
     const productMap = new Map(products.map((product) => [product.id, product]))
-    const subtotal = body.items.reduce((acc, item) => {
+    const orderItemsData = body.items.map((item) => {
       const product = productMap.get(item.productId)
-      return acc + Number(product?.price ?? 0) * item.quantity
+
+      if (!product) {
+        throw new Error('Producto inexistente en el carrito.')
+      }
+
+      const normalizedColor = normalizeVariantValue(item.selectedColor)
+      const normalizedSize = normalizeVariantValue(item.selectedSize)
+      const hasVariants = product.variants.length > 0
+
+      if (!hasVariants) {
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: Number(product.price),
+          variantId: null as string | null,
+        }
+      }
+
+      const matchedVariant = product.variants.find(
+        (variant) =>
+          (variant.color ?? null) === normalizedColor &&
+          (variant.size ?? null) === normalizedSize
+      )
+
+      if (!matchedVariant) {
+        throw new Error(
+          `La combinacion elegida para ${product.name} ya no esta disponible.`
+        )
+      }
+
+      if (matchedVariant.stock < item.quantity) {
+        throw new Error(
+          `No hay stock suficiente para ${product.name} en la variante elegida.`
+        )
+      }
+
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: Number(product.price),
+        variantId: matchedVariant.id,
+      }
+    })
+
+    const subtotal = orderItemsData.reduce((acc, item) => {
+      return acc + Number(item.unitPrice) * item.quantity
     }, 0)
+
+    const externalReference = `order-${randomUUID()}`
 
     const order = await prisma.order.create({
       data: {
@@ -67,43 +117,27 @@ export async function POST(request: Request) {
         subtotal,
         total: subtotal,
         paymentMethod: 'mercadopago',
+        externalReference,
         items: {
-          create: body.items.map((item) => {
-            const product = productMap.get(item.productId)
-            return {
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: Number(product?.price ?? 0),
-            }
-          }),
+          create: orderItemsData,
         },
       },
     })
 
-    const externalReference = `order-${order.id}`
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        externalReference,
-      },
-    })
-
     const origin = new URL(request.url).origin
-    const isLocalEnvironment =
-      origin.includes('localhost') || origin.includes('127.0.0.1')
+    const returnOrigin = resolveReturnOrigin(origin)
     const backUrls = {
-      success: `${origin}/success?status=approved&external_reference=${externalReference}`,
-      failure: `${origin}/success?status=failure&external_reference=${externalReference}`,
-      pending: `${origin}/success?status=pending&external_reference=${externalReference}`,
+      success: `${returnOrigin}/success?status=approved&external_reference=${externalReference}`,
+      failure: `${returnOrigin}/success?status=failure&external_reference=${externalReference}`,
+      pending: `${returnOrigin}/success?status=pending&external_reference=${externalReference}`,
     }
     const preferenceClient = getMercadoPagoPreferenceClient()
     const preference = await preferenceClient.create({
       body: {
         external_reference: externalReference,
-        notification_url: `${origin}/api/webhook/mercadopago`,
+        notification_url: `${returnOrigin}/api/webhook/mercadopago`,
         back_urls: backUrls,
-        auto_return: isLocalEnvironment ? undefined : 'approved',
+        auto_return: 'approved',
         payer: {
           name: body.customer.name,
           email: body.customer.email,
@@ -121,14 +155,6 @@ export async function POST(request: Request) {
       },
     })
 
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        mercadopagoId: preference.id ?? null,
-        mercadopagoStatus: 'created',
-      },
-    })
-
     return NextResponse.json({
       initPoint: preference.init_point,
       sandboxInitPoint: preference.sandbox_init_point,
@@ -137,10 +163,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating Mercado Pago preference:', error)
 
+    const message =
+      isDatabaseCapacityError(error)
+        ? getDatabaseCapacityMessage('preparar el checkout')
+        : error instanceof Error
+          ? error.message
+          : 'No pudimos iniciar Mercado Pago. Revisa MERCADOPAGO_ACCESS_TOKEN y vuelve a intentar.'
+
     return NextResponse.json(
       {
-        error:
-          'No pudimos iniciar Mercado Pago. Revisa MERCADOPAGO_ACCESS_TOKEN y vuelve a intentar.',
+        error: message,
       },
       { status: 500 }
     )

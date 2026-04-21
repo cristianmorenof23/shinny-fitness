@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Mail, MessageCircle } from 'lucide-react'
 import { OrderStatusForm } from '@/app/components/admin/order-status-form'
 import { requireAdmin } from '@/app/lib/auth'
+import { buildWhatsAppUrl } from '@/app/lib/contact'
 import { prisma } from '@/app/lib/prisma'
 
 function formatPrice(value: number | { toString(): string }) {
@@ -136,6 +138,27 @@ export default async function PedidosSlugPage({
                 <span className="font-medium text-neutral-900">Notas:</span>{' '}
                 {order.notes ?? 'Sin notas'}
               </p>
+              <div className="flex flex-wrap gap-3 border-t border-neutral-200 pt-4">
+                <a
+                  href={buildWhatsAppUrl(
+                    `Hola ${order.customerName}, te escribimos desde Shiny Fitness por tu pedido #${order.id.slice(-8).toUpperCase()}.`
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Abrir WhatsApp
+                </a>
+
+                <a
+                  href={`mailto:${order.customerEmail}`}
+                  className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+                >
+                  <Mail className="h-4 w-4" />
+                  Enviar email
+                </a>
+              </div>
             </div>
           </section>
 

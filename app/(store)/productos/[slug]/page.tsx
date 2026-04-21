@@ -1,10 +1,10 @@
 import Image from 'next/image'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { prisma } from '@/app/lib/prisma'
-import { AddToCartButton } from '@/app/components/product/add-to-cart-button'
+import { ProductPurchasePanel } from '@/app/components/product/product-purchase-panel'
+import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import { createMetadata, siteConfig, truncateDescription } from '@/app/lib/seo'
+import { getStorefrontProductBySlug } from '@/app/lib/storefront'
 
 export async function generateMetadata({
   params,
@@ -14,16 +14,7 @@ export async function generateMetadata({
   const { slug } = await params
 
   try {
-    const product = await prisma.product.findUnique({
-      where: { slug },
-      include: {
-        images: {
-          orderBy: { createdAt: 'asc' },
-          take: 1,
-        },
-        category: true,
-      },
-    })
+    const product = await getStorefrontProductBySlug(slug)
 
     if (!product) {
       return createMetadata({
@@ -57,6 +48,11 @@ export async function generateMetadata({
   }
 }
 
+function formatVariantLabel(color?: string | null, size?: string | null) {
+  const parts = [color, size].filter(Boolean)
+  return parts.length > 0 ? parts.join(' - ') : 'Variante unica'
+}
+
 export default async function ProductoSlugPage({
   params,
 }: {
@@ -64,30 +60,13 @@ export default async function ProductoSlugPage({
 }) {
   const { slug } = await params
 
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      images: {
-        orderBy: { createdAt: 'asc' },
-      },
-      category: true,
-      variants: {
-        where: {
-          isActive: true,
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
-      },
-    },
-  })
+  const product = await getStorefrontProductBySlug(slug)
 
   if (!product || !product.isActive) {
     notFound()
   }
 
   const mainImage = product.images[0]?.url || '/placeholder-product.jpg'
-  const firstVariant = product.variants[0]
   const hasStock =
     product.variants.length === 0 ||
     product.variants.some((variant) => variant.stock > 0)
@@ -133,17 +112,24 @@ export default async function ProductoSlugPage({
             {product.name}
           </h1>
 
-          <p className="text-2xl font-bold text-[#4A3728]">
-            ${Number(product.price).toLocaleString('es-AR')}
-          </p>
+          <div className="space-y-2">
+            <p className="text-2xl font-bold text-[#4A3728]">
+              {formatArs(product.price)}
+            </p>
+            <p className="text-sm text-[#8B5E3C]">
+              3 cuotas sin interes de{' '}
+              <span className="font-semibold">
+                {formatArs(getInstallmentPrice(product.price))}
+              </span>
+            </p>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 text-sm text-[#7A6A5F]">
             <span className="rounded-full bg-[#f5ede6] px-3 py-1">
-              3 cuotas de $
-              {Math.round(Number(product.price) / 3).toLocaleString('es-AR')}
+              {hasStock ? 'Disponible' : 'Sin stock'}
             </span>
             <span className="rounded-full bg-[#f5ede6] px-3 py-1">
-              {hasStock ? 'Disponible' : 'Sin stock'}
+              3 cuotas sin interes
             </span>
           </div>
 
@@ -151,34 +137,30 @@ export default async function ProductoSlugPage({
             <p className="text-base text-[#7A6A5F]">{product.shortDescription}</p>
           ) : null}
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AddToCartButton
-              product={{
-                id: product.id,
-                name: product.name,
-                slug: product.slug,
-                price: Number(product.price),
-                image: mainImage,
-                selectedSize: firstVariant?.size ?? 'Unico',
-                selectedColor: firstVariant?.color ?? 'Unico',
-              }}
-              disabled={!hasStock}
-              className="inline-flex items-center justify-center rounded-full bg-[#4A3728] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[#c8b6a6]"
-              label={hasStock ? 'Agregar al carrito' : 'Sin stock'}
-            />
-
-            <Link
-              href="/checkout"
-              className="inline-flex items-center justify-center rounded-full border border-[#dccbbc] px-6 py-4 text-sm font-semibold text-[#4b3425] transition hover:bg-[#f8efe7]"
-            >
-              Ir al checkout
-            </Link>
-          </div>
+          <ProductPurchasePanel
+            product={{
+              id: product.id,
+              name: product.name,
+              slug: product.slug,
+              price: Number(product.price),
+              image: mainImage,
+            }}
+            variants={product.variants.map((variant) => ({
+              id: variant.id,
+              color: variant.color,
+              size: variant.size,
+              stock: variant.stock,
+            }))}
+          />
 
           <div className="rounded-2xl border border-[#E5DED4] bg-white p-5">
             <h2 className="mb-2 text-lg font-semibold text-[#4A3728]">
               Descripcion
             </h2>
+            <p className="mb-4 text-sm font-medium text-[#8B5E3C]">
+              Podes pagar en 3 cuotas sin interes. El valor por cuota se calcula
+              automaticamente segun el monto del producto.
+            </p>
             <p className="whitespace-pre-line text-sm leading-7 text-[#6B5B50]">
               {product.description}
             </p>
@@ -186,12 +168,12 @@ export default async function ProductoSlugPage({
 
           <div className="rounded-2xl border border-[#E5DED4] bg-white p-5">
             <h2 className="mb-3 text-lg font-semibold text-[#4A3728]">
-              Variantes
+              Variantes disponibles
             </h2>
 
             {product.variants.length === 0 ? (
               <p className="text-sm text-[#7A6A5F]">
-                Este producto todavia no tiene variantes cargadas.
+                Este producto se vende como variante unica.
               </p>
             ) : (
               <div className="space-y-2">
@@ -201,8 +183,7 @@ export default async function ProductoSlugPage({
                     className="flex items-center justify-between rounded-xl border border-[#E5DED4] px-4 py-3"
                   >
                     <div className="text-sm text-[#4A3728]">
-                      {variant.color ? <span>Color: {variant.color} </span> : null}
-                      {variant.size ? <span>· Talle: {variant.size}</span> : null}
+                      {formatVariantLabel(variant.color, variant.size)}
                     </div>
                     <span className="text-sm font-medium text-[#8B5E3C]">
                       Stock: {variant.stock}

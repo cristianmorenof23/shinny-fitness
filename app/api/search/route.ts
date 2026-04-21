@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/app/lib/prisma'
+import { searchStorefrontProducts } from '@/app/lib/storefront'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -9,62 +9,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] })
   }
 
-  const products = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      OR: [
-        {
-          name: {
-            contains: query,
-          },
-        },
-        {
-          shortDescription: {
-            contains: query,
-          },
-        },
-        {
-          description: {
-            contains: query,
-          },
-        },
-        {
-          category: {
-            name: {
-              contains: query,
-            },
-          },
-        },
-      ],
-    },
-    include: {
-      category: true,
-      images: {
-        orderBy: {
-          createdAt: 'asc',
-        },
-        take: 1,
-      },
-    },
-    orderBy: [
-      {
-        isFeatured: 'desc',
-      },
-      {
-        createdAt: 'desc',
-      },
-    ],
-    take: 6,
-  })
+  try {
+    const products = await searchStorefrontProducts(query, 6)
 
-  return NextResponse.json({
-    results: products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: Number(product.price),
-      category: product.category.name,
-      image: product.images[0]?.url || '/placeholder-product.jpg',
-    })),
-  })
+    return NextResponse.json({
+      results: products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: Number(product.price),
+        category: product.category.name,
+        image: product.images[0]?.url || '/placeholder-product.jpg',
+      })),
+    })
+  } catch (error) {
+    console.error('Search route error:', error)
+    return NextResponse.json({ results: [] }, { status: 200 })
+  }
 }

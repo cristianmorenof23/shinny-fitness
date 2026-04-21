@@ -1,18 +1,12 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { CreditCard, LoaderCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import { useCartStore } from '@/app/store/cart-store'
-
-function formatPrice(value: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(value)
-}
 
 type CheckoutResponse = {
   initPoint?: string
@@ -39,7 +33,7 @@ export function CheckoutPageClient() {
     notes: '',
   })
 
-  const installmentPrice = useMemo(() => Math.round(total / 3), [total])
+  const installmentPrice = useMemo(() => getInstallmentPrice(total), [total])
 
   function updateField(field: keyof typeof customer, value: string) {
     setCustomer((current) => ({
@@ -189,7 +183,16 @@ export function CheckoutPageClient() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <CreditCard className="h-5 w-5 text-[#4b3425]" />
-                      <p className="font-semibold text-[#2f241d]">Mercado Pago</p>
+                      <div className="flex items-center gap-3">
+                        <p className="font-semibold text-[#2f241d]">Mercado Pago</p>
+                        <Image
+                          src="/mercado_pago.png"
+                          alt="Mercado Pago"
+                          width={110}
+                          height={28}
+                          className="h-7 w-auto object-contain"
+                        />
+                      </div>
                     </div>
                     <p className="mt-2 text-sm text-[#6f5b4d]">
                       Redirecciona a Checkout Pro para pagar con tarjeta, dinero en
@@ -197,6 +200,25 @@ export function CheckoutPageClient() {
                     </p>
                   </div>
                 </label>
+
+                <div className="rounded-3xl border border-dashed border-[#ddccbd] bg-[#fffaf6] p-5">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src="/go_cuotas.png"
+                      alt="Go Cuotas"
+                      width={110}
+                      height={28}
+                      className="h-7 w-auto object-contain"
+                    />
+                    <span className="rounded-full bg-[#f1e5da] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#8b684d]">
+                      Proximamente
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-[#6f5b4d]">
+                    Dejamos visible esta opcion para comunicar medios de pago
+                    disponibles y completar la integracion real en la siguiente etapa.
+                  </p>
+                </div>
               </section>
 
               {errorMessage ? (
@@ -245,17 +267,39 @@ export function CheckoutPageClient() {
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-[#2f241d]">
-                      {formatPrice(item.price * item.quantity)}
+                      {formatArs(item.price * item.quantity)}
                     </p>
                   </div>
                 ))}
               </div>
 
               <div className="mt-6 space-y-4 text-sm text-[#6f5b4d]">
+                <div className="rounded-2xl border border-[#eadfd5] bg-[#fffaf6] px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8b684d]">
+                    Medios destacados
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <Image
+                      src="/mercado_pago.png"
+                      alt="Mercado Pago"
+                      width={110}
+                      height={28}
+                      className="h-7 w-auto object-contain"
+                    />
+                    <Image
+                      src="/go_cuotas.png"
+                      alt="Go Cuotas"
+                      width={110}
+                      height={28}
+                      className="h-7 w-auto object-contain opacity-75"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
                   <span className="font-medium text-[#2f241d]">
-                    {formatPrice(total)}
+                    {formatArs(total)}
                   </span>
                 </div>
 
@@ -271,7 +315,7 @@ export function CheckoutPageClient() {
                   <p className="mt-2 text-sm text-[#4b3425]">
                     Referencia visual: 3 pagos de{' '}
                     <span className="font-semibold">
-                      {formatPrice(installmentPrice)}
+                      {formatArs(installmentPrice)}
                     </span>
                   </p>
                 </div>
@@ -282,7 +326,7 @@ export function CheckoutPageClient() {
                       Total
                     </span>
                     <span className="text-base font-semibold text-[#2f241d]">
-                      {formatPrice(total)}
+                      {formatArs(total)}
                     </span>
                   </div>
                 </div>

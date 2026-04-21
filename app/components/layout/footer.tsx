@@ -7,6 +7,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { BrandLogo } from '@/app/components/brand/brand-logo'
+import { buildWhatsAppUrl, contactConfig } from '@/app/lib/contact'
 
 const quickLinks = [
   { href: '/', label: 'Inicio' },
@@ -19,14 +20,14 @@ const contactItems = [
   {
     icon: Phone,
     label: 'WhatsApp',
-    value: '+54 9 351 000 0000',
-    href: 'https://wa.me/5493510000000',
+    value: contactConfig.whatsappDisplay,
+    href: buildWhatsAppUrl(),
   },
   {
     icon: Mail,
     label: 'Email',
-    value: 'hola@shiny.com.ar',
-    href: 'mailto:hola@shiny.com.ar',
+    value: contactConfig.email,
+    href: `mailto:${contactConfig.email}`,
   },
 ]
 
@@ -80,13 +81,13 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a
-                href="mailto:hola@shiny.com.ar"
+                href={`mailto:${contactConfig.email}`}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5DED4] transition-colors hover:bg-[#2D241E] hover:text-white"
               >
                 <Mail className="h-4 w-4" />
               </a>
               <a
-                href="https://instagram.com/shiny.fitness"
+                href={contactConfig.instagramUrl}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5DED4] transition-colors hover:bg-[#2D241E] hover:text-white"
               >
                 <Mail className="h-4 w-4" />
