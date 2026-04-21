@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { CheckoutPageClient } from '@/app/components/checkout/checkout-page'
+import { getGoCuotasCheckoutState } from '@/app/lib/gocuotas'
 import { createMetadata } from '@/app/lib/seo'
 
 export const metadata: Metadata = createMetadata({
@@ -10,5 +11,7 @@ export const metadata: Metadata = createMetadata({
 })
 
 export default function CheckoutPage() {
-  return <CheckoutPageClient />
+  const goCuotas = getGoCuotasCheckoutState()
+
+  return <CheckoutPageClient goCuotas={goCuotas} />
 }
