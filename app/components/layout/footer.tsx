@@ -1,7 +1,12 @@
 import Link from 'next/link'
 import { ArrowRight, Mail, MapPin, Phone, Sparkles } from 'lucide-react'
 import { BrandLogo } from '@/app/components/brand/brand-logo'
-import { buildWhatsAppUrl, contactConfig } from '@/app/lib/contact'
+import { InstagramIcon } from '@/app/components/icons/social-icons'
+import {
+  buildDeveloperWhatsAppUrl,
+  buildWhatsAppUrl,
+  contactConfig,
+} from '@/app/lib/contact'
 
 const quickLinks = [
   { href: '/', label: 'Inicio' },
@@ -82,9 +87,12 @@ export function Footer() {
               </a>
               <a
                 href={contactConfig.instagramUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram de Shiny Fitness"
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5DED4] transition-colors hover:bg-[#2D241E] hover:text-white"
               >
-                <Mail className="h-4 w-4" />
+                <InstagramIcon className="h-4 w-4" />
               </a>
             </div>
           </div>
@@ -161,17 +169,28 @@ export function Footer() {
 
         <section className="mt-20 flex flex-col items-center justify-between gap-6 border-t border-[#E5DED4] pt-8 md:flex-row">
           <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#B79E89]">
-            © {new Date().getFullYear()} Shiny Fitness - hecha por Cristian Moreno.
+            © {new Date().getFullYear()} Shiny Fitness - hecha por{' '}
+            <a
+              href={buildDeveloperWhatsAppUrl(
+                'Hola Cristian, vi tu trabajo en Shiny Fitness y queria consultarte por una web.'
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#6B4D39] transition hover:text-[#2D241E]"
+            >
+              {contactConfig.developerCreditName}
+            </a>
+            .
           </p>
           <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-[#2D241E]">
             <Link href="/privacidad" className="hover:text-[#8B5E3C]">
               Privacidad
             </Link>
             <Link href="/terminos" className="hover:text-[#8B5E3C]">
-              Términos
+              Terminos
             </Link>
             <Link href="/envios" className="hover:text-[#8B5E3C]">
-              Envíos
+              Envios
             </Link>
           </div>
         </section>

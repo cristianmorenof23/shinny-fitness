@@ -6,6 +6,7 @@ import {
   getDatabaseCapacityMessage,
   isDatabaseCapacityError,
 } from '@/app/lib/database-errors'
+import { sendOrderAlert } from '@/app/lib/order-alerts'
 import { getTransferDiscountAmount } from '@/app/lib/payments'
 import { siteConfig } from '@/app/lib/seo'
 import { getStorefrontProductsByIds } from '@/app/lib/storefront'
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
     const total = getTransferDiscountAmount(subtotal)
     const externalReference = `transfer-${randomUUID()}`
 
-    await prisma.order.create({
+    const order = await prisma.order.create({
       data: {
         customerName: body.customer.name,
         customerEmail: body.customer.email,
@@ -123,6 +124,17 @@ export async function POST(request: Request) {
           create: orderItemsData,
         },
       },
+    })
+
+    await sendOrderAlert({
+      orderId: order.id,
+      externalReference,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      total: order.total,
+      paymentMethod: order.paymentMethod,
+      alertType: 'pending_validation',
+      source: 'transferencia',
     })
 
     const origin = new URL(request.url).origin

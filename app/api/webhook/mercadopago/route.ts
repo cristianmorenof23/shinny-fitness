@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sendOrderAlert } from '@/app/lib/order-alerts'
 import { prisma } from '@/app/lib/prisma'
 import { getMercadoPagoPaymentClient } from '@/app/lib/mercadopago'
 
@@ -38,16 +39,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true })
     }
 
-    await prisma.order.updateMany({
+    const existingOrder = await prisma.order.findUnique({
       where: {
         externalReference,
+      },
+    })
+
+    if (!existingOrder) {
+      return NextResponse.json({ ok: true })
+    }
+
+    const nextStatus = mapMercadoPagoStatusToOrderStatus(payment.status)
+
+    await prisma.order.update({
+      where: {
+        id: existingOrder.id,
       },
       data: {
         mercadopagoStatus: payment.status ?? payload.action ?? 'updated',
         mercadopagoId: String(payment.id),
-        status: mapMercadoPagoStatusToOrderStatus(payment.status),
+        status: nextStatus,
       },
     })
+
+    if (payment.status === 'approved' && existingOrder.status !== 'PAID') {
+      await sendOrderAlert({
+        orderId: existingOrder.id,
+        externalReference: existingOrder.externalReference,
+        customerName: existingOrder.customerName,
+        customerEmail: existingOrder.customerEmail,
+        total: existingOrder.total,
+        paymentMethod: existingOrder.paymentMethod,
+        alertType: 'paid',
+        source: 'mercadopago',
+      })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {

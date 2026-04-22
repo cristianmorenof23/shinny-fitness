@@ -104,7 +104,7 @@ export default async function ProductosPage({
                 ) : null}
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-3">
                 {products.map((product) => {
                   const imageUrl = product.images[0]?.url || '/placeholder-product.jpg'
                   const colors = [
@@ -127,7 +127,7 @@ export default async function ProductosPage({
                   return (
                     <article
                       key={product.id}
-                      className="group overflow-hidden rounded-2xl border border-[#E5DED4] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                      className="group overflow-hidden rounded-[1.35rem] border border-[#E5DED4] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                     >
                       <Link href={`/productos/${product.slug}`} className="block">
                         <div className="relative aspect-4/5 bg-[#F6F1EB]">
@@ -140,12 +140,12 @@ export default async function ProductosPage({
 
                           <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-2">
                             {colors.length > 1 ? (
-                              <span className="rounded-full bg-white/92 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#4A3728] shadow-sm">
+                              <span className="rounded-full bg-white/92 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#4A3728] shadow-sm sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">
                                 {colors.length} colores
                               </span>
                             ) : null}
                             {sizes.length > 1 ? (
-                              <span className="rounded-full bg-[#2D241E]/88 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white shadow-sm">
+                              <span className="rounded-full bg-[#2D241E]/88 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white shadow-sm sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">
                                 {sizes.length} talles
                               </span>
                             ) : null}
@@ -153,28 +153,28 @@ export default async function ProductosPage({
                         </div>
                       </Link>
 
-                      <div className="space-y-3 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-[#8B5E3C]">
+                      <div className="space-y-2.5 p-3 sm:space-y-3 sm:p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8B5E3C] sm:text-xs sm:tracking-widest">
                           {product.category.name}
                         </p>
 
                         <Link href={`/productos/${product.slug}`}>
-                          <h2 className="line-clamp-2 text-base font-semibold text-[#4A3728]">
+                          <h2 className="line-clamp-2 text-sm font-semibold leading-5 text-[#4A3728] sm:text-base">
                             {product.name}
                           </h2>
                         </Link>
 
                         {product.shortDescription ? (
-                          <p className="line-clamp-2 text-sm text-[#7A6A5F]">
+                          <p className="hidden line-clamp-2 text-sm text-[#7A6A5F] sm:block">
                             {product.shortDescription}
                           </p>
                         ) : null}
 
                         <div className="space-y-1">
-                          <p className="text-lg font-bold text-[#4A3728]">
+                          <p className="text-base font-bold text-[#4A3728] sm:text-lg">
                             {formatArs(product.price)}
                           </p>
-                          <p className="text-xs text-[#8B5E3C]">
+                          <p className="text-[11px] leading-5 text-[#8B5E3C] sm:text-xs">
                             3 cuotas sin interes de{' '}
                             <span className="font-semibold">
                               {formatArs(getInstallmentPrice(product.price))}

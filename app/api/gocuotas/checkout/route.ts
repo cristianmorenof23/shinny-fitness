@@ -7,6 +7,7 @@ import {
   isDatabaseCapacityError,
 } from '@/app/lib/database-errors'
 import { getGoCuotasConfig } from '@/app/lib/gocuotas'
+import { sendOrderAlert } from '@/app/lib/order-alerts'
 import { getStorefrontProductsByIds } from '@/app/lib/storefront'
 
 const goCuotasCheckoutSchema = z.object({
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
 
     const externalReference = `gocuotas-${randomUUID()}`
 
-    await prisma.order.create({
+    const order = await prisma.order.create({
       data: {
         customerName: body.customer.name,
         customerEmail: body.customer.email,
@@ -128,6 +129,17 @@ export async function POST(request: Request) {
           create: orderItemsData,
         },
       },
+    })
+
+    await sendOrderAlert({
+      orderId: order.id,
+      externalReference,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      total: order.total,
+      paymentMethod: order.paymentMethod,
+      alertType: 'pending_validation',
+      source: 'gocuotas',
     })
 
     if (config.mode === 'payment_link' && config.paymentLinkUrl) {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppToaster } from "./components/ui/app-toaster";
 import { Navbar } from "./components/layout/nav-bar";
 import { Footer } from "./components/layout/footer";
+import { FloatingWhatsAppButton } from "./components/layout/floating-whatsapp-button";
 import { rootMetadata } from "./lib/seo";
 
 const geistSans = Geist({
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Navbar />
         {children}
+        <FloatingWhatsAppButton />
         <AppToaster />
         <Footer />
       </body>

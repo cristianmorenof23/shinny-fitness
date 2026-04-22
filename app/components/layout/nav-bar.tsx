@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Menu, Search, ShoppingBag, User, X } from 'lucide-react'
+import { ChevronDown, Menu, Search, ShoppingBag, User, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { BrandLogo } from '@/app/components/brand/brand-logo'
 import { useCartStore } from '@/app/store/cart-store'
@@ -14,6 +14,19 @@ const navLinks = [
   { href: '/productos', label: 'Productos' },
   { href: '/contacto', label: 'Contacto' },
   { href: '/sobre-mi', label: 'Sobre mi' },
+]
+
+const categoryLinks = [
+  { label: 'Calzas', searchTerm: 'Calzas' },
+  { label: 'Shorts', searchTerm: 'Shorts' },
+  { label: 'Tops', searchTerm: 'Tops' },
+  { label: 'Crops', searchTerm: 'Crops' },
+  { label: 'Camperas', searchTerm: 'Camperas' },
+  { label: 'Pantalon', searchTerm: 'Pantalon' },
+  { label: 'Buzos', searchTerm: 'Buzos' },
+  { label: 'Chalecos', searchTerm: 'Chalecos' },
+  { label: 'Catsuits', searchTerm: 'Catsuits' },
+  { label: 'Remeras', searchTerm: 'Remeras' },
 ]
 
 type SearchResult = {
@@ -116,6 +129,8 @@ function SearchResultsDropdown({
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [openCart, setOpenCart] = useState(false)
+  const [showDesktopCategories, setShowDesktopCategories] = useState(false)
+  const [showMobileCategories, setShowMobileCategories] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [animate, setAnimate] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -126,6 +141,7 @@ export function Navbar() {
   const router = useRouter()
   const totalItems = useCartStore((state) => state.getTotalItems())
   const hasSearchQuery = useMemo(() => searchQuery.trim().length >= 2, [searchQuery])
+  const desktopCategoriesTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -140,6 +156,14 @@ export function Navbar() {
     const timeout = setTimeout(() => setAnimate(false), 400)
     return () => clearTimeout(timeout)
   }, [totalItems, mounted])
+
+  useEffect(() => {
+    return () => {
+      if (desktopCategoriesTimeoutRef.current) {
+        clearTimeout(desktopCategoriesTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!hasSearchQuery) {
@@ -196,6 +220,25 @@ export function Navbar() {
     setSearchQuery('')
   }
 
+  const closeMobileMenu = () => {
+    setIsOpen(false)
+    setShowMobileCategories(false)
+  }
+
+  const openDesktopCategoriesMenu = () => {
+    if (desktopCategoriesTimeoutRef.current) {
+      clearTimeout(desktopCategoriesTimeoutRef.current)
+    }
+
+    setShowDesktopCategories(true)
+  }
+
+  const closeDesktopCategoriesMenu = () => {
+    desktopCategoriesTimeoutRef.current = setTimeout(() => {
+      setShowDesktopCategories(false)
+    }, 180)
+  }
+
   if (!mounted) return null
 
   return (
@@ -242,14 +285,73 @@ export function Navbar() {
 
           <nav className="hidden items-center gap-8 lg:flex">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="group relative text-[11px] font-bold uppercase tracking-[0.15em] text-[#5C4D42] transition-colors hover:text-[#8B5E3C]"
-              >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 h-[1.5px] w-0 bg-[#8B5E3C] transition-all duration-300 group-hover:w-full" />
-              </Link>
+              link.href === '/productos' ? (
+                <div
+                  key={link.href}
+                  className="group relative"
+                  onMouseEnter={openDesktopCategoriesMenu}
+                  onMouseLeave={closeDesktopCategoriesMenu}
+                >
+                  <Link
+                    href={link.href}
+                    className="group inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[#5C4D42] transition-colors hover:text-[#8B5E3C]"
+                  >
+                    {link.label}
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform ${
+                        showDesktopCategories ? 'rotate-180 text-[#8B5E3C]' : ''
+                      }`}
+                    />
+                    <span className="absolute -bottom-1 left-0 h-[1.5px] w-0 bg-[#8B5E3C] transition-all duration-300 group-hover:w-full" />
+                  </Link>
+
+                  <div
+                    className={`absolute left-1/2 top-[calc(100%+1.25rem)] z-50 w-[720px] -translate-x-1/2 rounded-[28px] border border-[#E7D9C9] bg-white p-6 shadow-[0_24px_70px_rgba(74,55,40,0.18)] transition-all duration-200 ${
+                      showDesktopCategories
+                        ? 'pointer-events-auto translate-y-0 opacity-100'
+                        : 'pointer-events-none -translate-y-2 opacity-0'
+                    }`}
+                  >
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8B5E3C]">
+                          Categorias
+                        </p>
+                        <p className="mt-1 text-sm text-[#6B5647]">
+                          Explora la coleccion segun la prenda que buscas.
+                        </p>
+                      </div>
+                      <Link
+                        href="/productos"
+                        className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4A3728] transition hover:text-[#8B5E3C]"
+                      >
+                        Ver todo
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-3">
+                      {categoryLinks.map((category) => (
+                        <Link
+                          key={category.label}
+                          href={`/productos?search=${encodeURIComponent(category.searchTerm)}`}
+                          className="rounded-[20px] border border-[#EEE1D4] bg-[#FCF8F4] px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.14em] text-[#4A3728] transition hover:border-[#C9A98A] hover:bg-white hover:text-[#8B5E3C]"
+                        >
+                          {category.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="group relative text-[11px] font-bold uppercase tracking-[0.15em] text-[#5C4D42] transition-colors hover:text-[#8B5E3C]"
+                >
+                  {link.label}
+                  <span className="absolute -bottom-1 left-0 h-[1.5px] w-0 bg-[#8B5E3C] transition-all duration-300 group-hover:w-full" />
+                </Link>
+              )
             ))}
           </nav>
 
@@ -342,15 +444,63 @@ export function Navbar() {
 
           <nav className="flex flex-col gap-8">
             {navLinks.map((link, index) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="text-2xl font-bold text-[#2D241E] transition-transform hover:translate-x-2"
-                style={{ transitionDelay: `${index * 50}ms` }}
-              >
-                {link.label}
-              </Link>
+              link.href === '/productos' ? (
+                <div key={link.href} style={{ transitionDelay: `${index * 50}ms` }}>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={link.href}
+                      onClick={closeMobileMenu}
+                      className="text-2xl font-bold text-[#2D241E] transition-transform hover:translate-x-2"
+                    >
+                      {link.label}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileCategories((current) => !current)}
+                      className="rounded-full border border-[#E5DED4] p-2 text-[#4A3728]"
+                    >
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${
+                          showMobileCategories ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div
+                    className={`grid overflow-hidden transition-all duration-300 ${
+                      showMobileCategories
+                        ? 'mt-5 grid-rows-[1fr] opacity-100'
+                        : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <div className="grid grid-cols-2 gap-3 rounded-[24px] border border-[#E7D9C9] bg-[#FCF8F4] p-4">
+                        {categoryLinks.map((category) => (
+                          <Link
+                            key={category.label}
+                            href={`/productos?search=${encodeURIComponent(category.searchTerm)}`}
+                            onClick={closeMobileMenu}
+                            className="rounded-[18px] border border-[#E7D9C9] bg-white px-4 py-3 text-sm font-semibold text-[#3B2E26] transition hover:border-[#C9A98A] hover:text-[#8B5E3C]"
+                          >
+                            {category.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  className="text-2xl font-bold text-[#2D241E] transition-transform hover:translate-x-2"
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </nav>
 
