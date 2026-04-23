@@ -4,7 +4,7 @@ const DEVELOPER_PHONE_RAW = '+54 9 351 333-6631'
 export const contactConfig = {
   whatsappDisplay: CONTACT_PHONE_RAW,
   whatsappNumber: '5493512091800',
-  email: 'hola@shiny.com.ar',
+  email: 'shinyfitnessport@gmail.com',
   instagram: '@shiny.fitness',
   instagramUrl: 'https://instagram.com/shiny.fitness',
   location: 'Cordoba, Argentina',

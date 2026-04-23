@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/prisma'
+import { revalidateStorefrontCatalog } from '@/app/lib/storefront'
 
 const categorySchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
@@ -22,6 +23,7 @@ type CategoryInput = {
 }
 
 function revalidateCategoryPaths(slug?: string) {
+  revalidateStorefrontCatalog()
   revalidatePath('/admin/categorias')
   revalidatePath('/admin/categorias/nueva')
   revalidatePath('/admin/productos/nuevo')
@@ -138,4 +140,47 @@ export async function updateCategory(categoryId: string, data: CategoryInput) {
   revalidatePath(`/admin/categorias/${categoryId}/editar`)
 
   return { ok: true, redirectTo: '/admin/categorias' }
+}
+
+export async function deleteCategory(categoryId: string) {
+  await requireAdmin()
+
+  const currentCategory = await prisma.category.findUnique({
+    where: {
+      id: categoryId,
+    },
+    select: {
+      id: true,
+      slug: true,
+      _count: {
+        select: {
+          products: true,
+        },
+      },
+    },
+  })
+
+  if (!currentCategory) {
+    return {
+      ok: false,
+      error: 'No encontramos la categoria a eliminar.',
+    }
+  }
+
+  if (currentCategory._count.products > 0) {
+    return {
+      ok: false,
+      error: 'No puedes eliminar una categoria que todavia tiene productos asociados.',
+    }
+  }
+
+  await prisma.category.delete({
+    where: {
+      id: categoryId,
+    },
+  })
+
+  revalidateCategoryPaths(currentCategory.slug)
+
+  return { ok: true }
 }

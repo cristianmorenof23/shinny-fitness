@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, Mail, MapPin, Phone, Sparkles } from 'lucide-react'
 import { BrandLogo } from '@/app/components/brand/brand-logo'
 import { InstagramIcon } from '@/app/components/icons/social-icons'
+import { NewsletterSubscribeForm } from '@/app/components/layout/newsletter-subscribe-form'
 import {
   buildDeveloperWhatsAppUrl,
   buildWhatsAppUrl,
@@ -56,8 +57,8 @@ export function Footer() {
             <div className="flex flex-col justify-center">
               <div className="rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
                 <p className="text-sm leading-relaxed text-[#D9CEC4]">
-                  Unite a nuestra comunidad y recibi curaduria de looks, acceso
-                  anticipado y consejos de bienestar.
+                  Unite a nuestra comunidad y descubri prendas nuevas,
+                  lanzamientos y novedades de Shiny antes que nadie.
                 </p>
                 <Link
                   href="/productos"
@@ -151,19 +152,7 @@ export function Footer() {
             <p className="mt-4 text-sm font-bold text-[#2D241E]">
               Sumate al Club Shiny.
             </p>
-            <form className="mt-6 space-y-3">
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full border-b border-[#DCCBC0] bg-transparent py-2 text-sm outline-none placeholder:text-[#B79E89] focus:border-[#2D241E]"
-              />
-              <button
-                type="button"
-                className="flex w-full items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#2D241E] transition-transform hover:translate-x-1"
-              >
-                Suscribirme <ArrowRight className="h-3 w-3" />
-              </button>
-            </form>
+            <NewsletterSubscribeForm />
           </div>
         </section>
 
@@ -187,10 +176,10 @@ export function Footer() {
               Privacidad
             </Link>
             <Link href="/terminos" className="hover:text-[#8B5E3C]">
-              Terminos
+              Términos
             </Link>
             <Link href="/envios" className="hover:text-[#8B5E3C]">
-              Envios
+              Envíos
             </Link>
           </div>
         </section>

@@ -3,7 +3,10 @@
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import { ProductPurchasePanel } from '@/app/components/product/product-purchase-panel'
-import { parseProductImageAlt } from '@/app/lib/product-images'
+import {
+  parseProductImageAlt,
+  sortImagesByColor,
+} from '@/app/lib/product-images'
 
 type ProductDetailImage = {
   id: string
@@ -28,20 +31,6 @@ type ProductDetailViewProps = {
   }
   images: ProductDetailImage[]
   variants: ProductDetailVariant[]
-}
-
-function imageMatchesColor(image: ProductDetailImage, color: string) {
-  const normalizedColor = color.trim().toLowerCase()
-  const parsedMeta = parseProductImageAlt(image.alt)
-  const normalizedTaggedColor = parsedMeta.color.trim().toLowerCase()
-  const alt = parsedMeta.alt.trim().toLowerCase()
-  const url = image.url.toLowerCase()
-
-  return (
-    normalizedTaggedColor === normalizedColor ||
-    alt.includes(normalizedColor) ||
-    url.includes(normalizedColor)
-  )
 }
 
 export function ProductDetailView({
@@ -69,15 +58,7 @@ export function ProductDetailView({
   )
 
   const filteredImages = useMemo(() => {
-    if (!selectedColor) {
-      return allImages
-    }
-
-    const matches = allImages.filter((image) =>
-      imageMatchesColor(image, selectedColor)
-    )
-
-    return matches.length > 0 ? matches : allImages
+    return sortImagesByColor(allImages, selectedColor)
   }, [allImages, selectedColor])
 
   const activeImage = useMemo(

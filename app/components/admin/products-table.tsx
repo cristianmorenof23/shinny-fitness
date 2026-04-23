@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Prisma } from '../../../generated/prisma/client'
+import DeleteProductButton from '@/app/components/admin/delete-product-button'
 
 type ProductWithRelations = Prisma.ProductGetPayload<{
   include: {
@@ -208,6 +209,11 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                       >
                         Ver
                       </Link>
+
+                      <DeleteProductButton
+                        productId={product.id}
+                        productName={product.name}
+                      />
                     </div>
                   </td>
                 </tr>

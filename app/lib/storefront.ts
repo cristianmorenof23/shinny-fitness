@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { unstable_cache } from 'next/cache'
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { prisma } from '@/app/lib/prisma'
 
 type StorefrontProductFilters = {
@@ -12,6 +12,8 @@ type StorefrontProductFilters = {
   isNew?: boolean
   take?: number
 }
+
+export const STOREFRONT_CATALOG_TAG = 'storefront-catalog'
 
 function normalizeSearch(search?: string) {
   const value = search?.trim()
@@ -92,7 +94,10 @@ const getCachedStorefrontSnapshot = unstable_cache(
     }
   },
   ['storefront-catalog-snapshot'],
-  { revalidate: 300 }
+  {
+    revalidate: 300,
+    tags: [STOREFRONT_CATALOG_TAG],
+  }
 )
 
 export async function getStorefrontCatalogSnapshot() {
@@ -115,12 +120,44 @@ export async function getStorefrontProductsByIds(ids: string[]) {
       return []
     }
 
-    const { products } = await getStorefrontCatalogSnapshot()
-    return products.filter((product) => uniqueIds.includes(product.id))
+    return await prisma.product.findMany({
+      where: {
+        id: {
+          in: uniqueIds,
+        },
+        isActive: true,
+        category: {
+          isActive: true,
+        },
+      },
+      include: {
+        images: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+        category: true,
+        variants: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
   } catch (error) {
     logStorefrontError('getStorefrontProductsByIds', error)
     return []
   }
+}
+
+export function revalidateStorefrontCatalog() {
+  revalidateTag(STOREFRONT_CATALOG_TAG, { expire: 0 })
 }
 
 export async function getStorefrontProducts(filters: StorefrontProductFilters = {}) {

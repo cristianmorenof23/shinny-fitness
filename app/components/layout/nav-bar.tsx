@@ -21,6 +21,8 @@ const categoryLinks = [
   { label: 'Shorts', searchTerm: 'Shorts' },
   { label: 'Tops', searchTerm: 'Tops' },
   { label: 'Crops', searchTerm: 'Crops' },
+  { label: 'Conjuntos largos', searchTerm: 'Conjuntos largos' },
+  { label: 'Conjuntos cortos', searchTerm: 'Conjuntos cortos' },
   { label: 'Camperas', searchTerm: 'Camperas' },
   { label: 'Pantalon', searchTerm: 'Pantalon' },
   { label: 'Buzos', searchTerm: 'Buzos' },

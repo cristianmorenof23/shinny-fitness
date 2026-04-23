@@ -91,3 +91,8 @@ export type Banner = Prisma.BannerModel
  * 
  */
 export type Testimonial = Prisma.TestimonialModel
+/**
+ * Model NewsletterSubscriber
+ * 
+ */
+export type NewsletterSubscriber = Prisma.NewsletterSubscriberModel

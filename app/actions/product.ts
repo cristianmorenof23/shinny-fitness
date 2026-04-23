@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/prisma'
+import { revalidateStorefrontCatalog } from '@/app/lib/storefront'
 
 const productVariantSchema = z
   .object({
@@ -116,6 +117,7 @@ function mapProductData(
 }
 
 function revalidateProductPaths(slug?: string) {
+  revalidateStorefrontCatalog()
   revalidatePath('/admin/productos')
   revalidatePath('/admin')
   revalidatePath('/productos')
@@ -240,5 +242,40 @@ export async function updateProduct(productId: string, data: ProductInput) {
   return {
     ok: true,
     redirectTo: '/admin/productos',
+  }
+}
+
+export async function deleteProduct(productId: string) {
+  await requireAdmin()
+
+  const current = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, slug: true },
+  })
+
+  if (!current) {
+    return {
+      ok: false,
+      error: 'No encontramos el producto a eliminar.',
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.orderItem.deleteMany({
+      where: {
+        productId: current.id,
+      },
+    }),
+    prisma.product.delete({
+      where: {
+        id: current.id,
+      },
+    }),
+  ])
+
+  revalidateProductPaths(current.slug)
+
+  return {
+    ok: true,
   }
 }

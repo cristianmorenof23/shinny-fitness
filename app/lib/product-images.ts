@@ -48,3 +48,36 @@ export function buildProductImageAlt({
 
   return `${COLOR_PREFIX}${normalizedColor}${ALT_SEPARATOR}${normalizedAlt}`
 }
+
+type ProductImageLike = {
+  url: string
+  alt?: string | null
+}
+
+export function imageMatchesColor(image: ProductImageLike, color: string) {
+  const normalizedColor = color.trim().toLowerCase()
+  const parsedMeta = parseProductImageAlt(image.alt)
+  const normalizedTaggedColor = parsedMeta.color.trim().toLowerCase()
+  const alt = parsedMeta.alt.trim().toLowerCase()
+  const url = image.url.toLowerCase()
+
+  return (
+    normalizedTaggedColor === normalizedColor ||
+    alt.includes(normalizedColor) ||
+    url.includes(normalizedColor)
+  )
+}
+
+export function sortImagesByColor<T extends ProductImageLike>(
+  images: T[],
+  color?: string
+) {
+  if (!color) {
+    return images
+  }
+
+  const matching = images.filter((image) => imageMatchesColor(image, color))
+  const remaining = images.filter((image) => !imageMatchesColor(image, color))
+
+  return [...matching, ...remaining]
+}

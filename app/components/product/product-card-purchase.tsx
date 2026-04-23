@@ -24,6 +24,7 @@ type ProductCardPurchaseProps = {
     image: string
   }
   variants: ProductCardVariant[]
+  onColorChange?: (color: string) => void
 }
 
 function uniqueValues(values: (string | null)[]) {
@@ -58,6 +59,7 @@ function getColorSwatchClass(color: string) {
 export function ProductCardPurchase({
   product,
   variants,
+  onColorChange,
 }: ProductCardPurchaseProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [selectedColor, setSelectedColor] = useState('')
@@ -136,8 +138,10 @@ export function ProductCardPurchase({
                 <select
                   value={selectedColor}
                   onChange={(event) => {
-                    setSelectedColor(event.target.value)
+                    const nextColor = event.target.value
+                    setSelectedColor(nextColor)
                     setSelectedSize('')
+                    onColorChange?.(nextColor)
                   }}
                   className="h-9 w-full rounded-xl border border-[#dccbbc] bg-white px-3 text-[11px] font-medium text-[#4A3728] outline-none transition focus:border-[#4A3728] sm:hidden"
                 >
@@ -159,6 +163,7 @@ export function ProductCardPurchase({
                         onClick={() => {
                           setSelectedColor(color)
                           setSelectedSize('')
+                          onColorChange?.(color)
                         }}
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${
                           isSelected

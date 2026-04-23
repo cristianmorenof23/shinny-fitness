@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { ProductDetailView } from '@/app/components/product/product-detail-view'
+import { ProductShareButton } from '@/app/components/product/product-share-button'
 import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import { createMetadata, siteConfig, truncateDescription } from '@/app/lib/seo'
 import { getStorefrontProductBySlug } from '@/app/lib/storefront'
@@ -122,6 +123,11 @@ export default async function ProductoSlugPage({
             <span className="rounded-full bg-[#f5ede6] px-3 py-1">
               3 cuotas sin interes
             </span>
+            <ProductShareButton
+              path={`/productos/${product.slug}`}
+              productName={product.name}
+              className="border-[#E5DED4] bg-white"
+            />
           </div>
 
           {product.shortDescription ? (

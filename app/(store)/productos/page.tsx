@@ -1,8 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { ProductCardPurchase } from '@/app/components/product/product-card-purchase'
+import { StorefrontProductCard } from '@/app/components/product/storefront-product-card'
 import { StorefrontFilters } from '@/app/components/product/storefront-filters'
-import { formatArs, getInstallmentPrice } from '@/app/lib/pricing'
 import {
   getStorefrontFilterOptions,
   getStorefrontProducts,
@@ -107,98 +105,31 @@ export default async function ProductosPage({
               <div className="grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-3">
                 {products.map((product) => {
                   const imageUrl = product.images[0]?.url || '/placeholder-product.jpg'
-                  const colors = [
-                    ...new Set(
-                      product.variants
-                        .filter((variant) => variant.stock > 0)
-                        .map((variant) => variant.color)
-                        .filter(Boolean)
-                    ),
-                  ]
-                  const sizes = [
-                    ...new Set(
-                      product.variants
-                        .filter((variant) => variant.stock > 0)
-                        .map((variant) => variant.size)
-                        .filter(Boolean)
-                    ),
-                  ]
 
                   return (
-                    <article
+                    <StorefrontProductCard
                       key={product.id}
-                      className="group overflow-hidden rounded-[1.35rem] border border-[#E5DED4] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                    >
-                      <Link href={`/productos/${product.slug}`} className="block">
-                        <div className="relative aspect-4/5 bg-[#F6F1EB]">
-                          <Image
-                            src={imageUrl}
-                            alt={product.name}
-                            fill
-                            className="object-cover transition duration-300 group-hover:scale-[1.03]"
-                          />
-
-                          <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-2">
-                            {colors.length > 1 ? (
-                              <span className="rounded-full bg-white/92 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#4A3728] shadow-sm sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">
-                                {colors.length} colores
-                              </span>
-                            ) : null}
-                            {sizes.length > 1 ? (
-                              <span className="rounded-full bg-[#2D241E]/88 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white shadow-sm sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">
-                                {sizes.length} talles
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </Link>
-
-                      <div className="space-y-2.5 p-3 sm:space-y-3 sm:p-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8B5E3C] sm:text-xs sm:tracking-widest">
-                          {product.category.name}
-                        </p>
-
-                        <Link href={`/productos/${product.slug}`}>
-                          <h2 className="line-clamp-2 text-sm font-semibold leading-5 text-[#4A3728] sm:text-base">
-                            {product.name}
-                          </h2>
-                        </Link>
-
-                        {product.shortDescription ? (
-                          <p className="hidden line-clamp-2 text-sm text-[#7A6A5F] sm:block">
-                            {product.shortDescription}
-                          </p>
-                        ) : null}
-
-                        <div className="space-y-1">
-                          <p className="text-base font-bold text-[#4A3728] sm:text-lg">
-                            {formatArs(product.price)}
-                          </p>
-                          <p className="text-[11px] leading-5 text-[#8B5E3C] sm:text-xs">
-                            3 cuotas sin interes de{' '}
-                            <span className="font-semibold">
-                              {formatArs(getInstallmentPrice(product.price))}
-                            </span>
-                          </p>
-                        </div>
-
-                        <ProductCardPurchase
-                          product={{
-                            id: product.id,
-                            name: product.name,
-                            slug: product.slug,
-                            price: Number(product.price),
-                            image: imageUrl,
-                          }}
-                          variants={product.variants.map((variant) => ({
-                            id: variant.id,
-                            color: variant.color,
-                            size: variant.size,
-                            stock: variant.stock,
-                          }))}
-                        />
-                      </div>
-                    </article>
+                      product={{
+                        id: product.id,
+                        name: product.name,
+                        slug: product.slug,
+                        price: Number(product.price),
+                        shortDescription: product.shortDescription,
+                        categoryName: product.category.name,
+                        image: imageUrl,
+                      }}
+                      images={product.images.map((image) => ({
+                        id: image.id,
+                        url: image.url,
+                        alt: image.alt,
+                      }))}
+                      variants={product.variants.map((variant) => ({
+                        id: variant.id,
+                        color: variant.color,
+                        size: variant.size,
+                        stock: variant.stock,
+                      }))}
+                    />
                   )
                 })}
               </div>
