@@ -9,7 +9,7 @@ export const siteConfig = {
   appIcon: '/icon.png',
   titleTemplate: '%s | Shiny Fitness',
   description:
-    'Shiny Fitness es una tienda online de ropa deportiva femenina con prendas premium, looks versatiles y una experiencia de compra cercana.',
+    'Shiny Fitness es una tienda online de ropa deportiva femenina en Cordoba: calzas, tops, shorts, conjuntos y prendas premium para entrenar con estilo.',
   ogImage: '/banner.png',
   locale: 'es_AR',
   creator: 'Shiny Fitness',
@@ -139,7 +139,7 @@ export function createMetadata({
 export const rootMetadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: siteConfig.name,
+    default: 'Shiny Fitness | Ropa deportiva femenina',
     template: siteConfig.titleTemplate,
   },
   description: siteConfig.description,
@@ -172,7 +172,7 @@ export const rootMetadata: Metadata = {
     locale: siteConfig.locale,
     url: siteConfig.url,
     siteName: siteConfig.name,
-    title: siteConfig.name,
+    title: 'Shiny Fitness | Ropa deportiva femenina',
     description: siteConfig.description,
     images: [
       {
@@ -183,7 +183,7 @@ export const rootMetadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: siteConfig.name,
+    title: 'Shiny Fitness | Ropa deportiva femenina',
     description: siteConfig.description,
     images: [absoluteUrl(siteConfig.ogImage)],
   },

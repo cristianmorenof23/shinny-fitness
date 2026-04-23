@@ -10,6 +10,12 @@ const staticRoutes = [
     priority: 1,
   },
   {
+    url: absoluteUrl('/productos'),
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.95,
+  },
+  {
     url: absoluteUrl('/contacto'),
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
@@ -20,6 +26,24 @@ const staticRoutes = [
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
+  },
+  {
+    url: absoluteUrl('/envios'),
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  },
+  {
+    url: absoluteUrl('/terminos'),
+    lastModified: new Date(),
+    changeFrequency: 'yearly' as const,
+    priority: 0.3,
+  },
+  {
+    url: absoluteUrl('/privacidad'),
+    lastModified: new Date(),
+    changeFrequency: 'yearly' as const,
+    priority: 0.3,
   },
 ]
 

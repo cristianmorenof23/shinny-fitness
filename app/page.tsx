@@ -7,9 +7,9 @@ import { Testimonials } from "./components/home/testimonials";
 import { createMetadata } from "./lib/seo";
 
 export const metadata: Metadata = createMetadata({
-  title: 'Ropa deportiva femenina premium',
+  title: 'Ropa deportiva femenina en Cordoba',
   description:
-    'Descubri Shiny Fitness: ropa deportiva femenina con estilo, confort y prendas pensadas para entrenar y sentirte bien todos los dias.',
+    'Descubri Shiny Fitness: calzas, tops, shorts, conjuntos y ropa deportiva femenina pensada para entrenar comoda, con estilo y cerca de vos.',
   path: '/',
 })
 
