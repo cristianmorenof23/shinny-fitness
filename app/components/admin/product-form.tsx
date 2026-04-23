@@ -87,6 +87,9 @@ export default function ProductForm({
       : []
   )
   const [isPending, startTransition] = useTransition()
+  const variantColors = [
+    ...new Set(variants.map((variant) => variant.color.trim()).filter(Boolean)),
+  ]
 
   function handleAutoSlug(value: string) {
     const generatedSlug = value
@@ -342,7 +345,11 @@ export default function ProductForm({
           </p>
         </div>
 
-        <ImageUpload value={images} onChange={setImages} />
+        <ImageUpload
+          value={images}
+          onChange={setImages}
+          colorOptions={variantColors}
+        />
       </div>
 
       <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-5">

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import DeleteCategoryButton from '@/app/components/admin/delete-category-button'
 
 type Category = {
   id: string
@@ -107,6 +108,10 @@ export default function CategoriesTable({
                     >
                       Ver
                     </Link>
+                    <DeleteCategoryButton
+                      categoryId={category.id}
+                      categoryName={category.name}
+                    />
                   </div>
                 </td>
               </tr>

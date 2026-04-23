@@ -13,9 +13,18 @@ export type UploadedImage = {
 interface ImageUploadProps {
   value: UploadedImage[]
   onChange: (images: UploadedImage[]) => void
+  colorOptions?: string[]
 }
 
-export default function ImageUpload({ value, onChange }: ImageUploadProps) {
+export default function ImageUpload({
+  value,
+  onChange,
+  colorOptions = [],
+}: ImageUploadProps) {
+  const normalizedColorOptions = [
+    ...new Set(colorOptions.map((color) => color.trim()).filter(Boolean)),
+  ]
+
   function handleRemove(publicId: string) {
     onChange(value.filter((image) => image.publicId !== publicId))
   }
@@ -59,8 +68,9 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
               Subir imagenes
             </button>
             <p className="text-xs text-neutral-500">
-              Tip: usa el texto alternativo para indicar el color de la foto, por
-              ejemplo &quot;Negro frente&quot; o &quot;Rosa detalle&quot;.
+              Tip: carga primero las variantes para poder elegir el color de cada
+              foto desde una lista. Asi la card cambia de imagen cuando eligen
+              color.
             </p>
           </div>
         )}
@@ -83,21 +93,55 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
               </div>
 
               <div className="space-y-3 p-3">
-                <input
-                  type="text"
-                  value={image.color || ''}
-                  onChange={(event) => {
-                    onChange(
-                      value.map((item) =>
-                        item.publicId === image.publicId
-                          ? { ...item, color: event.target.value }
-                          : item
-                      )
-                    )
-                  }}
-                  placeholder="Color asociado"
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
-                />
+                <div className="space-y-2 rounded-xl bg-neutral-50 p-3">
+                  <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    Color asociado
+                  </label>
+
+                  {normalizedColorOptions.length > 0 ? (
+                    <select
+                      value={image.color || ''}
+                      onChange={(event) => {
+                        onChange(
+                          value.map((item) =>
+                            item.publicId === image.publicId
+                              ? { ...item, color: event.target.value }
+                              : item
+                          )
+                        )
+                      }}
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900"
+                    >
+                      <option value="">Sin color especifico</option>
+                      {normalizedColorOptions.map((color) => (
+                        <option key={color} value={color}>
+                          {color}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={image.color || ''}
+                      onChange={(event) => {
+                        onChange(
+                          value.map((item) =>
+                            item.publicId === image.publicId
+                              ? { ...item, color: event.target.value }
+                              : item
+                          )
+                        )
+                      }}
+                      placeholder="Ej: Negro"
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900"
+                    />
+                  )}
+
+                  <p className="text-xs leading-5 text-neutral-500">
+                    Usa el mismo color que cargaste en variantes. Ejemplo:
+                    Negro, Rosa o Blanco.
+                  </p>
+                </div>
 
                 <input
                   type="text"
